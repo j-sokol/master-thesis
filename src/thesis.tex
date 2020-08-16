@@ -32,19 +32,19 @@
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
 
 \department{Katedra počítačových systémů}
-\title{Multimodální navigace}
+A\title{Multimodální navigace a její nasazení v škálovatelné architektuře}
 \authorGN{Jan} %(křestní) jméno (jména) autora
 \authorFN{Sokol} %příjmení autora
 \authorWithDegrees{Bc. Jan Sokol} %jméno autora včetně současných akademických titulů
 \author{Jan Sokol} %jméno autora bez akademických titulů
 \supervisor{Ing. Ondřej Guth Ph.D.}
 \acknowledgements{TODO.}
-\abstractCS{TODO}
-\abstractEN{TODO}
+\abstractCS{Tato práce se zabývá návrhem plánovače cest v  geoprostorových grafech, konkrétně s omezením na cesty ve městě. Plánovač nabízí různé způsoby dopravy a v určitých kombinacích také využívá vícera možností prostředků najednou. Plánovací služba je navržena dle principů tzv. mikroslužeb  (microservices). K plánovací službě je přístup navržen pomocí REST API. Do souvislosti s mikroslužbami je často spojováno využití technologií jako Docker a Kubernetes, kterých bude využito k nasazení aplikace do distribuovaného a škálovaného systému v druhé části práce. Při nasazení do Kubernetes je brán důraz na zabezpečení aplikace, bude tedy popsána autentikace a autorizace přístupů do systému. Část práce je věnována možnostem škálování aplikace v distribuovaném systému Kubernetes, s řešením přivýpadcích serverů či datacenter. Bude brán důraz na vysokou dostupnost aplikace jak při běžném provozu, tak při častém nasazování.}
+\abstractEN{This thesis deals with design of a trip planner in geospatial graphs, with a limitation of routes in cities. Route planner offers various means of transport. Multiple ways of transport are combined into one single trip when certain combinations are used. Route planning service is designed using principles of so called microservices. Access to the planning results is designed using REST API. Technologies like Docker and Kubernetes are usually connected with microservices, those technologies will be used to deploy planner indo distributed and scallable system in the second part of the thesis.  While deploying the service in an distributed system an emphasis is taken on security of the whole architecture, therefore authentication and authorization into the system will be described in the work. Part of the thesis is dedicated to the application scalability,  with cases when servers or datacenters are down. Importance will be put on high availability of the application, both in usual day to day business and also while deploying the microservices.}
 \placeForDeclarationOfAuthenticity{V~Praze}
 \declarationOfAuthenticityOption{4} %volba Prohlášení (číslo 1-6)
-\keywordsCS{Nahraďte seznamem klíčových slov v češtině oddělených čárkou.}
-\keywordsEN{Nahraďte seznamem klíčových slov v angličtině oddělených čárkou.}
+\keywordsCS{navigace, plánování cest, multimodální plánovač, hledání nejkratších cest, otp, osrm, dijskra, a star, contracted hierarchies, distribuovaný systém, vysoká dostupnost, mikroslužba, kubernetes, eks, docker, kontejnerizace, autentikace, autorizace, api gateway, oauth2}
+\keywordsEN{navigation, routing, multimodal, shortest path, otp, osrm, dijskra, a star, contracted hierarchies, distributed system, high availability, scalable service, microservice, kubernetes, eks, conteinerization, docker, authentication, authorization, api gateway, oauth2}
 % \website{http://site.example/thesis} %volitelná URL práce, objeví se v tiráži - úplně odstraňte, nemáte-li URL práce
 
 \begin{document}
@@ -54,6 +54,7 @@
 
 \begin{introduction}
 	%sem napište úvod Vaší práce
+
 \end{introduction}
 
 \chapter{Cíl práce}
