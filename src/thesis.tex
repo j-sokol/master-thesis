@@ -61,7 +61,15 @@ Současné plánovací aplikace mají až na výjimky jedno společné omezení 
 Díky tomu, že současnost poskytuje ve velkých městech velké množství způsobů dopravy,  tak vidíme, že jedna z možností je tyto způsoby dopravy kombinovat. Toto je něco, což často není tolik využíváno - už jen proto, že takovýto plán obsahující více možností je složitý na složení, alespoň manuálně. Pro zkombinování více způsobů dopravy je třeba vytvořit pokročilý plánovač, který spočítá více typů dopravy. Takový plánovač se nazývá multomodální.
 
 Tato pláce má tedy za jeden z cílů toto. Vybrat počáteční lokaci, konečnou lokaci, společně s časem odjezdu (pro tuto práci bude brán pouze případ aktuálního času)  a způsoby dopravy (ku příkladu sdílené městské prostědky, jako kola, skůtry, koloběžky, taxi, hromadná doprava) a daná aplikace vrátí seznam tras blízkých optimální trase. 
-	
+
+Dalším stěžejním cílem je nasazení výše zmíněné aplikace do kontejnerizovaného, distribuvaného a škálovatelného prostředí. Spouštění programů v kontejnerech se v poslední době těší veliké oblibě, většinou z důvodu potřeby vysoké dostupnosti aplikace. Takové aplikace většinou přichází s určitými potřebami - měly by  být zabezpečené a  škálovatelné. V současnosti k takovým požadavkům přichází určitá řešení. 
+
+Jedním z řešení k nasazení takové aplikace je využití cloudových řešení, oproti využití nasazení přímo do konvenčních serverů, či virtuálních serverů.I přes to, že cloud je zajímavá alternativa, nenabízí vysokou dostupnost automaticky. Tedy pro to, aby aplikace byla vysoce dostupná, měla by být k takovým požadavkům navržena už od začátku (taková aplikace se nazývá cloud-native). Takové prostředí musí být také orchestováno, k čemu existují určité nástroje, kterým se tato práce bude také věnovat. 
+
+Práce představí kontejner s výše zmíněnou aplikací, spolu s tím orchestrační software, díky kterému se aplikace bude spravovat. Dále představí problémy při nasazování vysoce dostupné aplikace do orchestrovaného, kontejnerizovaného prostředí. 
+
+Struktura a cíle jsou více do detailu popsány v kapitole níže.
+
 \end{introduction}
 
 \chapter{Struktura a cíle práce}
