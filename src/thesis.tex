@@ -18,6 +18,20 @@
 % \usepackage{amssymb} %additional math symbols
 
 \usepackage{dirtree} %directory tree visualisation
+\usepackage{svg}
+\usepackage{float}
+
+
+
+
+\usepackage{amsthm}
+
+\theoremstyle{plain}
+\newtheorem{thm}{Definice}[chapter] % reset theorem numbering for each chapter
+
+\theoremstyle{definition}
+\newtheorem{defn}[thm]{Definice} % definition numbers are dependent on theorem numbers
+\newtheorem{exmp}[thm]{Příklad} % same for example numbers
 
 % % list of acronyms
 % \usepackage[acronym,nonumberlist,toc,numberedsection=autolabel]{glossaries}
@@ -88,6 +102,91 @@ První částí je plánovač cest ve městech. Výstupem navrhovaného plánova
 
 
 Druhou částí je navržení nasazení aplikace do distribuovaného systému Kubernetes. Bude diskutováno, proč Kubernetes byl vybrán a jeho součásti budou popsány. V nasazení má být brán důraz na několik faktorů. Jedním z ním je bezpečnost aplikace běžící v otevřeném internetu. Tedy je důležité mít komunikaci s aplikací řešenou šifrovaně. Práce bude popisovat autentikaci a autorizaci přístupů do jednotilivých částí API rozhraní aplikace. Důležitá je též vysoká dostupnost aplikace, budou tedy popsány mechanismy vysoké dostupnosti v distribuovaném systému, a to i při opakovaném nasazování. Budou diskutovány způsoby nasazení, mezi ně patřící Blue/Green deployment, Carnary releases, Rolling updates, atp. Nasazování bude řešeno automatizovaně, spolu s porovnáním poskytovatelů CD (automatizovaných deploymentů/nasazení).
+
+
+
+
+\chapter{Teoretická část}
+\section{Základy teorie grafů}
+
+Pro pochopení problému hledání cest je prvně třeba definovat jednotlivé stavební bloky. Práce tedy v kapitolce níže popíše relevantní definice z teorie grafů.
+
+\subsection{Graf}
+
+\begin{defn}{Graf}\label{thm:graf}
+	(jednoduchý neorientovaný graf) je uspořádaná dvojice $G = (V,E)$, kde V je množina vrcholů a $E$ je množina hran – množina vybraných dvouprvkových podmnožin množiny vrcholů.  [1]  
+	\end{defn}
+
+\begin{defn}{Hrana, vrchol}\label{thm:graf}
+
+Hranu mezi vrcholy $u$ a $v$ označujeme jako $\{u, v\}$. Vrcholy spojené hranou nazýváme vrcholy sousední. Značkou $V(G)$ označujeme množinu vrcholů grafu $G$, množinu hran označujeme jako $E(G)$.
+\end{defn}
+
+\begin{defn}{Orientovaný graf}\label{thm:graf}
+
+Orientovaný graf je uspořádaná dvojice $D = (V, E)$, kde $E \subseteq V \times V$ . 
+\end{defn}
+
+Všechny dále zmíněné grafy budou orientované, tj. orientace hrany je důležitá.
+
+% [1] Za ́klady Teorie Graf ̊u  pro (nejen) informatiky 
+
+\subsection{Ohodnocení hran}
+
+Tím hlavním rozdílem mezi časově závislým a časově nezávislým grafem je právě způsob ohodnocení hran. U časově nezávislého modelu nám stačí přiřadit hraně konstatní hodnotu. U časově závislého je ohodnocení hran v ruzné denní časy různé.
+
+\subsection{Cesta}
+
+\begin{defn}{Cesta}\label{thm:graf}
+
+Podgrafu $H \subseteq	 G$, který je isomorfní nějaké cestě, říkáme cesta v $G$. 
+\end{defn}
+
+Jinak řečeno, cesta $P$ je sekvence uzlů tak, že pro každý $1 \leq	i < k$ platí podmínka $(vi, vi+1) \in	 E$. 
+
+\begin{figure}[H]\centering
+	% \includegraphics[width=0.5\textwidth, angle=30]{cvut-logo-bw}
+	\includesvg[width=0.5\textwidth]{graphs/path.drawio.svg}
+
+	\caption[Příklad obrázku]{Cesta délky $n$}\label{fig:float}
+\end{figure}
+
+% \includesvg[width=\textwidth]{graphs/path.drawio.svg}
+
+(obrázek cesty)
+
+\begin{defn}{Kružnice}\label{thm:graf}
+
+Kružnice délky $n$ má $n \geq 3$ vrcholů spojených do jednoho cyklu $n$ hranami.
+\end{defn}
+
+(obrázek kružnice)
+
+\begin{defn}{Délka cesty}\label{thm:graf}
+
+Délka cesty je součet jejich ohocnocení hran podél cesty.
+\end{defn}
+
+
+Plánování cest
+
+Modely
+
+Časově nezávislý model
+
+Problém nejdřívějšího příjezdu
+
+
+Hledání nejkratší cesty
+
+many to many
+
+one to many
+
+many to one
+
+
+Algoritmy k hledání nejkratší cesty
 
 
 \chapter{Analýza a návrh}
