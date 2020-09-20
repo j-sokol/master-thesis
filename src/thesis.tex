@@ -235,7 +235,94 @@ Jízdní řád může být modelován dvěmi základními přístupy, a to jako 
 \section{Nasazení aplikace}
 
 
+\subsection{Koncept mikroslužeb}
+
+Architektura mikroslužeb, jež nabrala na popularitě během posledních let či desetiletí, je způsob návrhu, při kterém míříme k vytvoření množiny malých, lehkých a vzájemně nezáviských služeb. Každá ze služeb běží ve svém procesu nezávislých na ostatních. Všechny služby mezi sebou komunikují na daném mechanismu/protokolu.
+
+Opačným přístupem je monilitická architektura. U monolitického přístupu je celá aplikační logika sepsána jako společný kód (codebase). V případě, že programátor chce změnit jakkoli malou část kódu, je vždy třeba zkompilovat, sestavit a nasadit celou aplikaci. Tato vlastnost monolitické architektury může způsobit komplikace při vývoji aplikace, a to obvzlášť v případě, že aplikace je velká.
+
+I proto jsou automatická nasazení (CI/CD) mnohem jednodužší v architektuře mikroslužeb. V takovém připadě není nutno kompilovat, či sestavovat celou aplikaci, ale pouze změny v dané mikroslužbě, kterou měníme. Jedním z důsledků je i to, že můžeme jednodužšeji se orientovat v kódu aplikace a také jednodužšeji nacházíme a opravujeme chyby (bugy).
+
+Díky tomu můžeme dodávat a nasazovat do produkčního prostředí nové verze aplikace nepoměrně rychleji. Proto je také možno nasazovat menší změny a to s rychlejší frekvencí. 
+
+Dalším problémem monolitické aplikace může být škálování. A to proto, že celá aplikace musí být škálovatelná. U přístupu mikroslužeb, kde každá komponenta, či služba je izolovaná a samostatně škálovatelná, můžeme v případě potřeby naškálovat jen ty části, u kterých je to aktuálně z důvodu vysokého zatížení nutné.
+
+Mezi výhody také patří to, že můžeme jednotlivé instance mikroslužeb rozdělit a distribuovat na několik fyzických strojů, či dokonce datacenter. Pro to, aby služby, co běží na různých serverech, spolu komunikovali, je nutné, aby byl implementovaný Service Discovery protokol. 
+
+V kontrastu k tomu musí být monolitická architektura nasazena na jednom stroji ve stejném prostředí, připadně rozdělena pomocí HA funkcionalit.
+
+% Zde se také dostáváme k problému škálovaní. Monilitická architektura z principu je škálovatelná vertikálně, tedy přidáním hardwarových zdrojů, jako CPU, či paměti RAM. U přístupu mikroslužeb je možno přidání více instancí.
+
+\begin{figure}[H]\centering
+	% \includegraphics[width=0.5\textwidth, angle=30]{cvut-logo-bw}
+	\includesvg[width=0.5\textwidth]{graphs/microservice-vs-monolith.drawio.svg}
+
+	\caption[Příklad obrázku]{Monolitická architektura vs. architektura mikroslužeb}\label{fig:float}
+\end{figure}
+
+
+Obrázek výše ukazuje hlavní rozdíly mezi monolitickou a mikroslužbovou architekturou. I přes zjevné výhody architektury založené na mikroslužbách, je nutné podotknout i její nevýhody. Jedním z nich je interní komunikace mezi službami. Ty mohou být implementovány buď jako REST, GraphQl API, či jako RPC volání. Díky tomu by měla být latence mezi službami brána v zřetel. Další věc je, že taková to komunikace vyžaduje stabilní a bezpečnou síť.
+
+Také s tím, jak aplikace založená na mikroslužbách začíná narůstat, začne se objevovat potřeba pro kvalitní monitoring a tracing. Dalším krokem je implementace service mesh komunikace.
+
+
+
 \section{Distribuované výpočetní systémy}
+
+\subsection{Virtualizace}
+
+Virtu
+
+\subsection{Hypervizor virtualizace}
+
+
+
+\subsection{Kontejnerová virtualizace}
+
+% + kontejner historie, i.e chroot a solaris zones
+
+
+Virtualizace založená na kontejnerech
+
+\subsection{Docker kontejner}
+
+% impl via cgroups, unionfs
+
+% zminit kontejnerizaci bez demona (name?)
+
+% kontejner image + vrstvys
+
+\subsubsection{Architektura Dockeru a komponenty}
+\subsection{Frameworky pro orchestraci kontejnerů}
+\subsection{Kubernetes}
+
+\subsubsection{Architektura Kubernetes}
+
+
+% master vs worker node
+
+%  PSP, Network policy
+% Cognito
+
+% Kubebench
+
+
+% service mesh
+
+\subsubsection{Vlastní nasazení vs Kubernetes as a Service}
+
+\subsubsection{Výběr managované služby}
+
+% DOKS
+% GKE
+% EKS
+
+
+% odkaz na praktickou cast popisujici EKS a AWS komponenty
+
+
+
+
 
 
 
@@ -267,6 +354,7 @@ Jízdní řád může být modelován dvěmi základními přístupy, a to jako 
 
 \subsection{Návrh plánovací služby}
 
+
 % - popis multimodal routing služby, její API endpointy, komunikace s ostatními službami (databáze, sdílená cache obsahující lokace dopravních prostředků, podpůrné služby pro navigaci - OTP pro MHD, OSRM pro singlemodální plánování cest, ..)
 % - zpusob wrappovani nad osrm a otp popsane vyse
 % - singlemodal routing
@@ -297,12 +385,48 @@ Jízdní řád může být modelován dvěmi základními přístupy, a to jako 
 % - ulozeni do redisu
 
 
+\subsubsection{Postup kontejnerizace aplikace}
+
+
+
+\subsubsection{Hardening kontejneru}
+
+
+
+
 \section{Nasazení plánovače}
 
 \subsection{Distribuovaná architektura}
 
+% Nasazeni kubernetes
+
+% Architektura systemu a designova rozhodnuti
+
+% Pridani secretu do k8s
+
+% skalovatelnost
+
+%  skalovani podu
+% manualni
+% autoscaling
+
+
+
+\subsection{Vytvoření soukromého Docker registry}
+
+% ECR
+
+% Gitlab Registry
+
+\subsection{Zabezpečení Kubernetes clusteru}
+
 
 \chapter{Možná vylepšení do budoucnosti}
+
+
+\section{Vylepšení na plánovací aplikaci}
+
+\subsection{Návrh nejkratších cest s ohledem na dopravní zácpy}
 
 
 % - Možná vylepšení do budoucnosti
@@ -316,6 +440,13 @@ Jízdní řád může být modelován dvěmi základními přístupy, a to jako 
 %     - vylepseni na architekture
 
 
+\section{Vylepšení na architektuře}
+
+
+\subsection{Service mesh}
+
+
+\subsection{OIDC}
 
 
 
@@ -356,6 +487,48 @@ Jízdní řád může být modelován dvěmi základními přístupy, a to jako 
 	\bibitem{time-dependent-networks-as-models-to-achieve-fast-exact-time-table-queries}
 
 	Gerth Stølting Brodal and Riko Jacob. Time-dependent networks as models to achieve fast exact time-table queries. Electronic Notes in Theoretical Computer Science, 92:3–15, 2004.
+
+
+	\bibitem{virt-comparison}
+
+	M. J. Scheepers, “Virtualization and containerization of application infrastructure: A comparison,” in 21st Twente Student Conference on IT, vol. 1,
+	pp. 1–7, 2014.
+
+	\bibitem{monitoring-smart-cities}
+
+	S. Muralidharan, G. Song, and H. Ko, “Monitoring and managing iot applications in smart cities using kubernetes,” CLOUD COMPUTING 2019,
+	p. 11, 2019.
+
+	\bibitem{k8s-avail-manager}
+
+	L. A. Vayghan, M. A. Saied, M. Toeroe, and F. Khendek, “Kubernetes as an availability manager for microservice applications,” 1901.04946, 2019.
+
+	\bibitem{microservice-devops}
+
+	A. Balalaie, A. Heydarnoori, and P. Jamshidi, “Microservices architecture enables devops: Migration to a cloud-native architecture,” Ieee Software, vol. 33, no. 3, pp. 42–52, 2016.
+
+
+	\bibitem{microservice-docker}
+
+	] D. Jaramillo, D. V. Nguyen, and R. Smart, “Leveraging microservices architecture by using docker technology,” in SoutheastCon 2016, pp. 1–5, IEEE,
+	2016.
+
+	\bibitem{docker-reproducible}
+
+	C. Boettiger, “An introduction to docker for reproducible research,” ACM
+	SIGOPS Operating Systems Review, vol. 49, no. 1, pp. 71–79, 2015.
+
+	\bibitem{cloud-native-experience}
+
+		A. Balalaie, A. Heydarnoori, and P. Jamshidi, “Migrating to cloud-native
+	architectures using microservices: an experience report,” in European Conference on Service-Oriented and Cloud Computing, pp. 201–215, Springer,
+	2015.
+	\bibitem{ha-k8s}
+
+
+	Elastisys, “Setting up highly available kubernetes clusters.”
+	https://elastisys.com/wp-content/uploads/2018/
+	01/kubernetes-ha-setup.pdf. [Online
 \end{thebibliography}
 
 
