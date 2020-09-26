@@ -34,6 +34,10 @@
 
 
 
+% \usepackage{etoolbox}
+% \AtBeginEnvironment{quote}{\singlespacing\small}
+
+\usepackage{csquotes}
 
 
 \usepackage{amsthm}
@@ -257,7 +261,7 @@ V kontrastu k tomu musí být monolitická architektura nasazena na jednom stroj
 	% \includegraphics[width=0.5\textwidth, angle=30]{cvut-logo-bw}
 	\includesvg[width=0.5\textwidth]{graphs/microservice-vs-monolith.drawio.svg}
 
-	\caption[Příklad obrázku]{Monolitická architektura vs. architektura mikroslužeb}\label{fig:float}
+	\caption[Monolitická architektura vs. architektura mikroslužeb]{Monolitická architektura vs. architektura mikroslužeb}\label{fig:float}
 \end{figure}
 
 
@@ -299,6 +303,7 @@ Virtualizace založená na kontejnerech
 \subsubsection{Architektura Kubernetes}
 
 
+% service discovery
 % master vs worker node
 
 %  PSP, Network policy
@@ -308,6 +313,9 @@ Virtualizace založená na kontejnerech
 
 
 % service mesh
+
+
+% zabezpeceni kubernetes
 
 \subsubsection{Vlastní nasazení vs Kubernetes as a Service}
 
@@ -387,7 +395,7 @@ Virtualizace založená na kontejnerech
 
 \subsubsection{Postup kontejnerizace aplikace}
 
-
+% best practices
 
 \subsubsection{Hardening kontejneru}
 
@@ -397,6 +405,71 @@ Virtualizace založená na kontejnerech
 \section{Nasazení plánovače}
 
 \subsection{Distribuovaná architektura}
+
+
+
+\subsubsection{Softwarově definovaná infrastruktura}
+
+S příchodem cloudu a virtualizace jako takové přišel i nespočet nových nástrojů a platforem, díky kterým začne vznikat portfolio systémů, o které se většinou musíme starat. V důsledku komplexnosti portfolia pomocných programů tedy i krok k více softwarově definované infrastruktuře. Softwarově definovaná architektura (většinou nazývaná jako Infrastructure as Code, zkráceně IaC) je pokus o využití maximálního potenciálu aktuální IT infrastruktury. Kief Morris popisuje IaC následovně
+
+
+	
+\begin{quotation}
+Infrastruktura jako kód je přístup k administraci IT infrastruktury v době cloudu, s využitím mikroslužeb, automatického nasazování a založeném na praktikách ze softwarového inženýrství.  
+\end{quotation}
+
+Pro replikovatelnost řešení této práce budeme používat právě IaC pro popis nasazované infrastruktury.
+
+\paragraph{Výhody IaC}
+
+Využití Softwarově definované architektury má několik hlávních výhod.
+
+\paragraph{Jednoduše a rychle reprodukovatelné systémy}
+
+S použitím IaC mohou administrátoři rychle nasadit a nastavit celou infrastrukturu spuštěním jednoho jednoduchého příkazu, či skriptu.
+
+IaC skripty popisují všechny nutné kroky pro vytvoření požadovaného systému, jako například velikost instance, nainstalovaný software dané verze, nastavení firewallu, atp.
+
+\paragraph{Jednorázové systémy}
+
+
+IaC přeměnila starý, statický přístup k systémům na dynamický, kde již neměníme staré instance daného zdroje, ale pro jednoduchost vytvoříme nový. Po té, co je jisté, že zdroj pracuje korektně, nahradí starou instanci. Díky tomu je jednodužší programy přesouvat z jednoho serveru na druhý bez velkých potíží. Toto pomáhá také s aktualizacemi potřebných knihoven či operačního systému. Takovýto způsob myšlení je nutný v případech, kdy potřebujeme dynamicky škálovat systémy a nemůžeme se spolehnout na hardware, na kterém aplikace běží.
+
+\paragraph{Konzistence konfigurace}
+
+
+
+Lidské chyby vždy způsobovaly problémy při konzistenci konfigurace, a to i v případech, kdy jsou následovány procesy a postupy. Manuální úpravy vytvoří menší či větší odchylky od původního zdrojového kódu, což zvyšuje pravděpodobnost složitosti a časové náročnosti při opravě softwarové chyby. 
+
+IaC plně standardizuje konfiguraci infrastruktury a díky tomu nenechává moc prostoru lidské chybě.
+
+
+
+\paragraph{Samodokumentují se systémy}
+
+Obvzáště v malých a pružných projektech se bojujeme s tím, aby dokumentace byla užitečná a přesně popisující daný problém. S tím, jak dokumentaci, či program upravujeme, tím více je pravděpodobnost nekonzistence dokumentace a problému vyšší. Další problém je to, že různí lidé mají různé způsoby psaní dokumentace a jejich vysvětlení nemusí být hned čtenáři zřejmé. I díky tomu většina dokumentací přesně nereprezentuje to, co daný problém znamená. IaC toto řeší tím, že definici a dokumentaci generuje přímo z kódu a právě kvůli tomu máme informace vždy aktuální. K tomu je třeba dopsat jen malé části dokumentace k dovysvětlení hůře pochopitelných částí.  
+
+
+\paragraph{Verzování všeho}
+
+S tím, jak máme definici infrastruktury v kódu, se nám otvírá možnost použít verzovací systém pro sledování změn, a případně vrácení se ke starší verze infrastruktury, v případě, že se objevily nějaké problémy.
+
+Verzovací systémy (Version Control System, VCS) nám nabízí zobrazení změn, obsahující všechny implementované změny, důvod, a osobu, která změny vytvořila. Taková funkce přidává užitečnost v případě oprav kódu, protože se jednouduše můžeme obrátit na člověka, který danou část změnil. 
+
+\paragraph{Terraform}
+
+V našem případě využijeme k popisu infrastruktury program Terraform. Terraform je nástroj na automatizaci infrastruktury od společnosti HashiCorp a je napsán v jazyce Go. Hlavní výhodou Terraformu je, že je multiplatformní, tj. podporuje mnoho různých cílů (v Terraform terminologii zvané backendy), mezi němi jsou AWS Cloud, GCP, Azure, ale i bare metal nasazování, jako KVM (libvirt).
+
+
+Terraform popisuje infrastrukturu pomocí konfiguračních souborů, jež jsou psány v jazyce HCL. Hashicorp Configuration Languag (HCL) je doménově specifický jazyk vyvinutý uvnitř firmy HashiCorp.
+
+% sw defined infra
+
+% infra as code
+
+% Terraform
+
+% 
 
 % Nasazeni kubernetes
 
