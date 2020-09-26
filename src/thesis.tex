@@ -273,9 +273,15 @@ Také s tím, jak aplikace založená na mikroslužbách začíná narůstat, za
 
 \section{Distribuované výpočetní systémy}
 
+
+
 \subsection{Virtualizace}
 
-Virtu
+Virtualizace je koncept zavedený již dekády. Koncept odkazuje na vytvoření objektu/zdroje, jako je např. operační systém, hardware, úložiště, či síť, který je na vrstvě abstrahované or reálné vrstvy.
+
+Tyto emulované a virtualizované systémy mohou být nastavovány, udržovány a replikovány mnohem jednodužšeji a na požádání. Další věcí je, že virtualizací jsou zdroje přiřazovány uživatelům, či aplikacím dle jejich reálných potřeb a díky tomu mohou být zdroje mnohem lépe využity. Toto velice pomáhá jak ke snížení nákladů, tak také k šetření životního prostředí. 
+
+Dvě hlavní virtualizační techniky jsou virtualizace založená na hypervisoru a na kontejnerech, které popíšou kapitoly níže.
 
 \subsection{Hypervizor virtualizace}
 
@@ -285,8 +291,16 @@ Virtu
 
 % + kontejner historie, i.e chroot a solaris zones
 
+Virtualizace založená na kontejnerech (také nazývaná jako virtualizace na úrovni operačního systému) je odlehčená alternativa k hypervisorům. Tento způsob kontejnerizace využívá funkcí kernelu ze serveru, na kterém virtualizace běží a to tím, že vytváří instance oddělených user-spaců, nazývaných kontejnery.
 
-Virtualizace založená na kontejnerech
+Kontejner výpadá z pohledu procesu běžícího uvnitř jako plnohodnotný operační systém. V realitě to ale je oddělený prostor uvnitř hostovacího operačního systému, se kterým sdílí zdroje. A tedy kontejnery nemají svoje virtualizované hardware (jako hypervizor virtualizace). 
+
+Díky tomu, že kontejnery neemulují žádný hardware, nepotřehují čas pro nastartování operačního systému. Proto nabízí velmi rychlé startovací časy (v milisekundách). Kontejner zabaluje všechny balíčky, které může potřebovat, jako například knihovny, binární soubory, či jiné konfigurace potřebné k nastavení operačního systému. Takovýto menší otisk přínáší několik výhod, jako vyšší výkonnost, zvýšenou bezpečnost či dobrou škálovatelnost.
+
+Virtualizace založená na kontejnerech může být implementována na jakémkolik operačním systému, každopádně populární techniky, jako třeba Docker jsou založeny na funkcích v Linux kernelu. 
+
+V Linuxu je přiřazování zdrojů založeno na cgroups funkcionalitě (control groups).  
+
 
 \subsection{Docker kontejner}
 
@@ -297,10 +311,26 @@ Virtualizace založená na kontejnerech
 % kontejner image + vrstvys
 
 \subsubsection{Architektura Dockeru a komponenty}
+
 \subsection{Frameworky pro orchestraci kontejnerů}
+
+
+V současné době mezi nejpopulárnější frameworky pro orchestraci kontejnerů patří Docker Swarm, Kubernetes a Apache Mesos. Mezi jejich nejčastěji zmiňované výhody patří vysoká dostupnost při nasazování při použití homogeních prostředí v datacentrech. Z důvodu nejvyšší podpory Kubernetes u cloudových poskytovatelů a také v současnosti největší komunitě se budeme v příštích kapitolách věnovat právě jemu a konkurenční technologie vynecháme.
+
 \subsection{Kubernetes}
 
+Kapitola níže uvede komponenty Kubernetes pro potřeby nasazení plánvací aplikace. Každopádně pro kompletní a více detailní informace doporučuji oficiální dokumentaci. 
+
+Jak definuje oficiální stránka, Kubernetes je orchestrační systém pro kontejnery, navržený pro nasazení, škálování, řízení a kompozici aplikačních konternerů napříč klustery serverů (produkční úrovně). Je to robustní systém pro řízení  kontejnerů, který nabízí virtuální abstrakční vrstvu nad poskytovatelem cloudových služeb a je velmi užitečný pro nasazování a udržování škálovatelných a distribuovaných systémů. Další velkou výhodou je, že pomáhá uživatelům konzistentně nasazovat aplikace na různé aplikační poskutovatele.
+
+Kubernetes je třetí generace služby pro řízení kontejnerů od Googlu, představen na Google Developer Forum v červnu 2014. Kubernetes použil mnoho nápadů z předchozí technologie od Googlu, Borgu. Původně byly aplikace uvnitř Googlu spouštěny právě pomocí Borgu, každopádně později vznikl zájem o podobnou technologii i mimo společnost. Toto motivovalo Google k vývoji právě Kubernetesu.  
+
 \subsubsection{Architektura Kubernetes}
+
+
+% Kubernetes introduces Application-Oriented Infrastructure (AOI) with two motivations:
+% • abstracting away details of machine and operating system from application developer and deployment
+% • single application process per container Design Pattern entails that managing containers mean managing applications, therefore, it shifts the Kube API from machine-oriented to application-oriented and, improves application deployment and introspection
 
 
 % service discovery
@@ -319,8 +349,16 @@ Virtualizace založená na kontejnerech
 
 \subsubsection{Vlastní nasazení vs Kubernetes as a Service}
 
+
+
 \subsubsection{Výběr managované služby}
 
+
+Kapitola níže popíše nejvíce populární aktuálně dostupné managované distrubuce Kubernetes. Poté bude nastíněn výběr Kubernetes distribuce.s
+
+\paragraph{DOKS}
+\paragraph{GKE}
+\paragraph{DOKS}
 % DOKS
 % GKE
 % EKS
@@ -332,7 +370,12 @@ Virtualizace založená na kontejnerech
 
 
 
-
+% ############ PRAKTIKALES
+% ############ PRAKTIKALES
+% ############ PRAKTIKALES
+% ############ PRAKTIKALES
+% ############ PRAKTIKALES
+% ############ PRAKTIKALES
 
 \chapter{Praktická část}
 
@@ -463,13 +506,6 @@ V našem případě využijeme k popisu infrastruktury program Terraform. Terraf
 
 Terraform popisuje infrastrukturu pomocí konfiguračních souborů, jež jsou psány v jazyce HCL. Hashicorp Configuration Languag (HCL) je doménově specifický jazyk vyvinutý uvnitř firmy HashiCorp.
 
-% sw defined infra
-
-% infra as code
-
-% Terraform
-
-% 
 
 % Nasazeni kubernetes
 
@@ -483,6 +519,10 @@ Terraform popisuje infrastrukturu pomocí konfiguračních souborů, jež jsou p
 % manualni
 % autoscaling
 
+\subsection{Automatizace infrastruktury}
+
+Pro zvýšení důvěry ve správnost a kvalitu softwaru, Fowler et al. doporučuje co nejvíce automatizovat opakované úkoly, jako například spouštění testů, vytváření kontejnerů, či nasazování. Dle jejich názoru by měl CD (continoous deployment) tvořit nasazení doslovně nudným. Také Newman  nazývá virtualizaci jako klíčovým faktorem k automatizaci infrastruktury, a to proto, že napomáhají k aotumatickému vytvoření a škálování virtuálních strojů pro vývojové či produkční prostředí.
+
 
 
 \subsection{Vytvoření soukromého Docker registry}
@@ -491,8 +531,15 @@ Terraform popisuje infrastrukturu pomocí konfiguračních souborů, jež jsou p
 
 % Gitlab Registry
 
+
+\subsection{API brána}
+
+
+% traefik 
 \subsection{Zabezpečení Kubernetes clusteru}
 
+
+% scanovani imagu
 
 \chapter{Možná vylepšení do budoucnosti}
 
