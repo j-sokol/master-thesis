@@ -281,9 +281,24 @@ Virtualizace je koncept zavedený již dekády. Koncept odkazuje na vytvoření 
 
 Tyto emulované a virtualizované systémy mohou být nastavovány, udržovány a replikovány mnohem jednodužšeji a na požádání. Další věcí je, že virtualizací jsou zdroje přiřazovány uživatelům, či aplikacím dle jejich reálných potřeb a díky tomu mohou být zdroje mnohem lépe využity. Toto velice pomáhá jak ke snížení nákladů, tak také k šetření životního prostředí. 
 
+Poskytovatelé cloudových služeb, jako Amazon AWS, či Microsoft Azure využívají virtualizace v jiejich datacentrech a následně zdroje nabízejí jako službu (Infrastructure as a service, IaaS). 
+
+
+Virtualizaci můžeme najít jak na serverové části, tak na té klientské. V této práci budou zmíněny jen ty na serverové části.
+
 Dvě hlavní virtualizační techniky jsou virtualizace založená na hypervisoru a na kontejnerech, které popíšou kapitoly níže.
 
 \subsection{Hypervizor virtualizace}
+
+Virtualizace založená na hypervizorech umožnuje spouštění plných virtuálních strojů (VMs) na hypervisoru. Takové virtuální stroje se skládají z plného operačního systému, obsahujícího kernel (jádro), aplikaci a všechny závislosti. 
+
+% Hypervisor jako takový je software běžící na hardwaru (např. VMWare ESXi), či jako další vrstva nad operačním systémem (Libvirt/KVM na Linuxu). 
+
+Hypervisory se dále dělí do dvou základních částí, Hypervisor typu 1 a typu 2.
+
+Hypervisor typu 1 (také jako Baremetal Hypervisor) běží přímo na hardwaru daného počítače. Mezi ně patří například Xen, nebo  VMWare ESXi. 
+
+Hypervisory typu 2 (také jako hostovaný hypervisor) běží jako další vrstva nad operačním systémem. Mezi hostované hypervisory patří VirtualBox, QEMU, či VMWare Workstation. Minimálně u platformy x86 roveň oddělení virtuálního stroje od hypervisoru je poměrně robustní, protože CPU instrukce poskytují hardwarovou izolaci a útokový vektor ze strany hypervisoru není tak obrovský. I tak výzkumníci ukázali určité útoky.  
 
 
 
@@ -291,16 +306,25 @@ Dvě hlavní virtualizační techniky jsou virtualizace založená na hypervisor
 
 % + kontejner historie, i.e chroot a solaris zones
 
-Virtualizace založená na kontejnerech (také nazývaná jako virtualizace na úrovni operačního systému) je odlehčená alternativa k hypervisorům. Tento způsob kontejnerizace využívá funkcí kernelu ze serveru, na kterém virtualizace běží a to tím, že vytváří instance oddělených user-spaců, nazývaných kontejnery.
+Virtualizace založená na kontejnerech (také nazývaná jako virtualizace na úrovni operačního systému, případně kontejnerizace) je odlehčená alternativa k hypervisorům. Tento způsob kontejnerizace využívá funkcí kernelu ze serveru, na kterém virtualizace běží a to tím, že vytváří instance oddělených user-spaců (ve kterých běží skupiny procesů), nazývaných kontejnery. 
 
-Kontejner výpadá z pohledu procesu běžícího uvnitř jako plnohodnotný operační systém. V realitě to ale je oddělený prostor uvnitř hostovacího operačního systému, se kterým sdílí zdroje. A tedy kontejnery nemají svoje virtualizované hardware (jako hypervizor virtualizace). 
+Kontejner výpadá z pohledu procesu běžícího uvnitř jako plnohodnotný operační systém. V realitě to ale je oddělený prostor uvnitř hostovacího operačního systému, se kterým sdílí zdroje (sdílí stejný kernel, tedy žádný hypervisor není potřeba). A tedy kontejnery nemají svůj virtualizované hardware (jako např. hypervizor virtualizace). 
 
-Díky tomu, že kontejnery neemulují žádný hardware, nepotřehují čas pro nastartování operačního systému. Proto nabízí velmi rychlé startovací časy (v milisekundách). Kontejner zabaluje všechny balíčky, které může potřebovat, jako například knihovny, binární soubory, či jiné konfigurace potřebné k nastavení operačního systému. Takovýto menší otisk přínáší několik výhod, jako vyšší výkonnost, zvýšenou bezpečnost či dobrou škálovatelnost.
+Díky tomu, že kontejnery neemulují žádný hardware, nepotřebují čas pro nastartování operačního systému. Proto nabízí velmi rychlé startovací časy (v milisekundách). Kontejner zabaluje všechny balíčky, které může potřebovat, jako například knihovny, binární soubory, či jiné konfigurace potřebné k nastavení operačního systému. Takovýto menší otisk přínáší několik výhod, jako vyšší výkonnost, zvýšenou bezpečnost či dobrou škálovatelnost.
 
 Virtualizace založená na kontejnerech může být implementována na jakémkolik operačním systému, každopádně populární techniky, jako třeba Docker jsou založeny na funkcích v Linux kernelu. 
 
-V Linuxu je přiřazování zdrojů založeno na cgroups funkcionalitě (control groups).  
 
+\subsubsection{Mechanismy kontejnerizace}
+
+Kontejnery jsou většinou vytvořeny pomocí následujících funkcí v jádře OS: kernel namespace (jmenný prostor v jádru) a cgroups (Control groups). Tyto funkce se zaměřují na vytváření skupin procesů, které jsou od sebe odděleny (kernel namespaces) a vynucují jim limity na zdroje (control groups).
+
+% V Linuxu je přiřazování zdrojů založeno na cgroups funkcionalitě (control groups).  
+
+
+
+
+ Právě Docker virtualizaci se se bude věnovat další podkapitola.
 
 \subsection{Docker kontejner}
 
