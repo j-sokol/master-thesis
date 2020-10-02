@@ -69,8 +69,8 @@
 \author{Jan Sokol} %jméno autora bez akademických titulů
 \supervisor{Ing. Ondřej Guth Ph.D.}
 \acknowledgements{TODO.}
-\abstractCS{Tato práce se zabývá návrhem plánovače cest v  geoprostorových grafech, konkrétně s omezením na cesty ve městě. Plánovač nabízí různé způsoby dopravy a v určitých kombinacích také využívá vícera možností prostředků najednou. Plánovací služba je navržena dle principů tzv. mikroslužeb  (microservices). K plánovací službě je přístup navržen pomocí REST API. Do souvislosti s mikroslužbami je často spojováno využití technologií jako Docker a Kubernetes, kterých bude využito k nasazení aplikace do distribuovaného a škálovaného systému v druhé části práce. Při nasazení do Kubernetes je brán důraz na zabezpečení aplikace, bude tedy popsána autentikace a autorizace přístupů do systému. Část práce je věnována možnostem škálování aplikace v distribuovaném systému Kubernetes, s řešením přivýpadcích serverů či datacenter. Bude brán důraz na vysokou dostupnost aplikace jak při běžném provozu, tak při častém nasazování.}
-\abstractEN{This thesis deals with design of a trip planner in geospatial graphs, with a limitation of routes in cities. Route planner offers various means of transport. Multiple ways of transport are combined into one single trip when certain combinations are used. Route planning service is designed using principles of so called microservices. Access to the planning results is designed using REST API. Technologies like Docker and Kubernetes are usually connected with microservices, those technologies will be used to deploy planner indo distributed and scallable system in the second part of the thesis.  While deploying the service in an distributed system an emphasis is taken on security of the whole architecture, therefore authentication and authorization into the system will be described in the work. Part of the thesis is dedicated to the application scalability,  with cases when servers or datacenters are down. Importance will be put on high availability of the application, both in usual day to day business and also while deploying the microservices.}
+\abstractCS{Tato práce se zabývá návrhem plánovače cest v  geoprostorových grafech, konkrétně s omezením na cesty ve městě. Plánovač nabízí různé způsoby dopravy a v určitých kombinacích také využívá vícera možností prostředků najednou. Plánovací služba je navržena dle principů tzv. mikroslužeb  (microservices). K plánovací službě je přístup navržen pomocí REST API. Technologií jako Docker a Kubernetes je využito k nasazení aplikace do distribuovaného a škálovaného systému v druhé části práce. Při nasazení do Kubernetes je brán důraz na zabezpečení aplikace, je popsána autentikace a autorizace přístupů do systému. Část práce je věnována možnostem škálování aplikace v distribuovaném systému Kubernetes, s řešením při výpadcích serverů či datacenter. Je brán důraz na vysokou dostupnost aplikace jak při běžném provozu, tak při častém nasazování.}
+\abstractEN{This thesis deals with design of a trip planner in geospatial graphs, with a limitation of routes in cities. Route planner offers various means of transport. Multiple ways of transport are combined into one single trip when certain combinations are used. Route planning service is designed using principles of so called microservices. Access to the planning results is designed using REST API. Technologies  Docker and Kubernetes will be used to deploy the route planner into distributed and scallable system in the second part of the thesis.  While deploying the service in an distributed system an emphasis is taken on security of the whole architecture, therefore authentication and authorization while connecting to the system is described in the work. Part of the thesis is dedicated to the application scalability including cases when servers or datacenters are down. Importance is put on high availability of the application, both in usual day to day business and also while deploying route planner microservices.}
 \placeForDeclarationOfAuthenticity{V~Praze}
 \declarationOfAuthenticityOption{4} %volba Prohlášení (číslo 1-6)
 \keywordsCS{navigace, plánování cest, multimodální plánovač, hledání nejkratších cest, otp, osrm, dijskra, a star, contracted hierarchies, distribuovaný systém, vysoká dostupnost, mikroslužba, kubernetes, eks, docker, kontejnerizace, autentikace, autorizace, api gateway, oauth2}
@@ -84,17 +84,17 @@
 
 \begin{introduction}
 	%sem napište úvod Vaší práce
-V současné době je plánování cest velmi důležité a na důležitosti stále více přibývá. A s tím, jak dopravní síť začíná být čím dál více složitější a naše pohyblivost po městě začíná být čím dál více důležitější, tak také stoupá potřeba po efektivním a rychléím plánovači. Plánovač je obsažen ve většině současných chytrých mobilních telefonů a také většína leteckých či drážních společností poskytuje nějaký způsob naplánování cesty s jejich dopravními prostředky. 
+V současné době je plánování cest velmi důležité a na důležitosti stále více přibývá. A s tím, jak dopravní síť začíná být čím dál složitější a naše pohyblivost po městě začíná být čím dál více důležitější, tak také stoupá potřeba po efektivním a rychlém plánovači. Plánovač je obsažen ve většině současných chytrých mobilních telefonů a také většina leteckých či drážních společností poskytuje nějaký způsob naplánování cesty s jejich dopravními prostředky. 
 
-Současné plánovací aplikace mají až na výjimky jedno společné omezení - to je, že plánují jen ve svém vlastním způsobu dopravy. Když využijeme aplikaci hromadné dopravy, plánovač nám ukáže pouze tramvaje, metro a jiné prostředky MHD. Podobně je to s GPS navigací, kde můžeme hledat cestu jen v silniční síti. 
+Současné plánovací aplikace mají až na výjimky jedno společné omezení -- to je, že plánují jen ve svém vlastním způsobu dopravy. Když využijeme aplikaci hromadné dopravy, plánovač nám ukáže pouze tramvaje, metro a jiné prostředky MHD. Podobně je to s GPS navigací, kde můžeme hledat cestu jen v silniční síti. 
 
-Díky tomu, že současnost poskytuje ve velkých městech velké množství způsobů dopravy,  tak vidíme, že jedna z možností je tyto způsoby dopravy kombinovat. Toto je něco, což často není tolik využíváno - už jen proto, že takovýto plán obsahující více možností je složitý na složení, alespoň manuálně. Pro zkombinování více způsobů dopravy je třeba vytvořit pokročilý plánovač, který spočítá více typů dopravy. Takový plánovač se nazývá multomodální.
+Díky tomu, že současnost poskytuje ve velkých městech velké množství způsobů dopravy, vidíme, že jedna z možností je tyto způsoby dopravy kombinovat. Toto je něco, co často není tolik využíváno -- už jen proto, že takovýto plán obsahující více možností je složitý na složení, alespoň manuálně. Pro zkombinování více způsobů dopravy je třeba vytvořit pokročilý plánovač, který spočítá více typů dopravy. Takový plánovač se nazývá multomodální.
 
-Tato pláce má tedy za jeden z cílů toto. Vybrat počáteční lokaci, konečnou lokaci, společně s časem odjezdu (pro tuto práci bude brán pouze případ aktuálního času)  a způsoby dopravy (ku příkladu sdílené městské prostědky, jako kola, skůtry, koloběžky, taxi, hromadná doprava) a daná aplikace vrátí seznam tras blízkých optimální trase. 
+Tato práce má tedy za jeden z cílů toto. Vybrat počáteční lokaci, konečnou lokaci, společně s časem odjezdu (pro tuto práci bude brán pouze případ aktuálního času)  a způsoby dopravy (ku příkladu sdílené městské prostředky, jako kola, skůtry, koloběžky, taxi, hromadná doprava) a daná aplikace vrátí seznam tras blízkých optimální trase. 
 
-Dalším stěžejním cílem je nasazení výše zmíněné aplikace do kontejnerizovaného, distribuvaného a škálovatelného prostředí. Spouštění programů v kontejnerech se v poslední době těší veliké oblibě, většinou z důvodu potřeby vysoké dostupnosti aplikace. Takové aplikace většinou přichází s určitými potřebami - měly by  být zabezpečené a  škálovatelné. V současnosti k takovým požadavkům přichází určitá řešení. 
+Dalším stěžejním cílem je nasazení výše zmíněné aplikace do kontejnerizovaného, distribuvaného a škálovatelného prostředí. Spouštění programů v kontejnerech se v poslední době těší veliké oblibě, většinou z důvodu potřeby vysoké dostupnosti aplikace. Takové aplikace většinou přichází s určitými potřebami -- měly by  být zabezpečené a  škálovatelné. V současnosti k takovým požadavkům přichází určitá řešení. 
 
-Jedním z řešení k nasazení takové aplikace je využití cloudových řešení, oproti využití nasazení přímo do konvenčních serverů, či virtuálních serverů.I přes to, že cloud je zajímavá alternativa, nenabízí vysokou dostupnost automaticky. Tedy pro to, aby aplikace byla vysoce dostupná, měla by být k takovým požadavkům navržena už od začátku (taková aplikace se nazývá cloud-native). Takové prostředí musí být také orchestováno, k čemu existují určité nástroje, kterým se tato práce bude také věnovat. 
+Jedním z řešení k nasazení takové aplikace je využití cloudových řešení, oproti využití nasazení přímo do konvenčních serverů, či virtuálních serverů. I přes to, že cloud je zajímavá alternativa, nenabízí vysokou dostupnost automaticky. Tedy pro to, aby aplikace byla vysoce dostupná, měla by být k takovým požadavkům navržena už od začátku (taková aplikace se nazývá cloud-native). Takové prostředí musí být také orchestováno, k čemu existují určité nástroje, kterým se tato práce bude také věnovat. 
 
 Práce představí kontejner s výše zmíněnou aplikací, spolu s tím orchestrační software, díky kterému se aplikace bude spravovat. Dále představí problémy při nasazování vysoce dostupné aplikace do orchestrovaného, kontejnerizovaného prostředí. 
 
@@ -104,20 +104,15 @@ Struktura a cíle jsou více do detailu popsány v kapitole níže.
 
 \chapter{Struktura a cíle práce}
 
-
 Diplomová práce je rozdělena do dvou hlavních bodů. Prvním je navrhnout a popsat aplikaci či systém, který bude plánovat cesty v geoprostorových grafech. Konkrétně je omezení  na cesty ve městech, a to s použitím různých metod dopravy. Se současným rozvojem sdílených dopravních prostředků ve městech bude služba využívat jak veřejné hromadné dopravy, tak i těchto sdílených vozidel. druhou částí je návrh a popis nasazení plánovací aplikace (mikroslužby) do distribuovaného systému.
 
 \section{Plánovač cest}
 
-
-První částí je plánovač cest ve městech. Výstupem navrhovaného plánovače budou cesty s použitím jednoho typu prostředku, ale také s jejich kombinacemi (takové kombinace, které dávají smysl — tento výběr bude také v práci diskutován).  Ke správnému návrhu a pochopení problematiky hledání cest budou popsány dva základní modely - model závislý a model nezávislý na čase. Na nich budou popsány algoritmy hledající nejkratší cesty.  K následému návrhu bude použit software publikovaný pod otevřenou licencí. U tohoto software práce popíše algoritmy, dle kterých jsou cesty v grafech hledány a na nihž je software stavěn. 
-
+První částí je plánovač cest ve městech. Výstupem navrhovaného plánovače budou cesty s použitím jednoho typu prostředku, ale také s jejich kombinacemi (takové kombinace, které dávají smysl —- tento výběr bude také v práci diskutován).  Ke správnému návrhu a pochopení problematiky hledání cest budou popsány dva základní modely -- model závislý a model nezávislý na čase. Na nich budou popsány algoritmy hledající nejkratší cesty.  K následému návrhu bude použit software publikovaný pod otevřenou licencí. U tohoto software práce popíše algoritmy, dle kterých jsou cesty v grafech hledány a na nich je software stavěn. 
 
 \section{Nasazení mikroslužby v distribuovaném systému}
 
-
-
-Druhou částí je navržení nasazení aplikace do distribuovaného systému Kubernetes. Bude diskutováno, proč Kubernetes byl vybrán a jeho součásti budou popsány. V nasazení má být brán důraz na několik faktorů. Jedním z ním je bezpečnost aplikace běžící v otevřeném internetu. Tedy je důležité mít komunikaci s aplikací řešenou šifrovaně. Práce bude popisovat autentikaci a autorizaci přístupů do jednotilivých částí API rozhraní aplikace. Důležitá je též vysoká dostupnost aplikace, budou tedy popsány mechanismy vysoké dostupnosti v distribuovaném systému, a to i při opakovaném nasazování. Budou diskutovány způsoby nasazení, mezi ně patřící Blue/Green deployment, Carnary releases, Rolling updates, atp. Nasazování bude řešeno automatizovaně, spolu s porovnáním poskytovatelů CD (automatizovaných deploymentů/nasazení).
+Druhou částí je navržení nasazení aplikace do distribuovaného systému Kubernetes. Bude diskutováno, proč Kubernetes byl vybrán a jeho součásti budou popsány. V nasazení má být brán důraz na několik faktorů. Jedním z ním je bezpečnost aplikace běžící v otevřeném internetu. Tedy je důležité mít komunikaci s aplikací řešenou šifrovaně. Práce bude popisovat autentizaci a autorizaci přístupů do jednotlivých částí API rozhraní aplikace. Důležitá je též vysoká dostupnost aplikace, budou tedy popsány mechanismy vysoké dostupnosti v distribuovaném systému, a to i při opakovaném nasazování. Budou diskutovány způsoby nasazení, mezi ně patřící Blue/Green deployment, Carnary releases, Rolling updates atp. Nasazování bude řešeno automatizovaně, spolu s porovnáním poskytovatelů CD (automatizovaných deploymentů/nasazení).
 
 
 
@@ -321,12 +316,63 @@ Kontejnery jsou většinou vytvořeny pomocí následujících funkcí v jádře
 
 % V Linuxu je přiřazování zdrojů založeno na cgroups funkcionalitě (control groups).  
 
+Control Groups (or cgroups) jsou využívány na vynucení limitů na hardware zdroje, jako např. počet procesorů, procesorové využití, přiřazení paměti, atp. Taková omezení mohou být přiřazeny buď jednomu procesu, či množině procesů. Cgroups mohou být využity k zajíštění, aby jeden kontejner nezahltil systém využítím všech jeho zdrojů. 
 
+Pravidla jsou organizována ve stromové struktuře, jsou děděny a volitelně vrstvena (nestable).
+
+Cgroups mohou být vnímány jako vylepšení nad ulimity/rlimity. Nastavují se pomocí speciálního virtuálního souboru připojeném v cestě /sys/fs/cgroup a mohou být kdykoliv měněny.
+
+Mezi hlavní skupiny cgroup patří CPU, memory, BLKIO, devices, network nebo freezer. V případě, že jsou špatně nastaveny, tak taková chyba může být využita k útěku z kontejneru ven. 
+
+[The main cgroup subsystems are CPU, memory, BLKIO,
+devices, network and freezer. If configured wrong, this can also be a security issue, since
+it can be used for a container escape [36]. In context of container technology, most of
+cgroups management is abstracted away, with the exception of LXC [33].
 
 
  Právě Docker virtualizaci se se bude věnovat další podkapitola.
 
-\subsection{Docker kontejner}
+\subsection{Docker}
+
+V minulé části jsme popsali kontejnerovou virtualizaci a zde popíšeme reálnou implementaci. Docker přidává abstraktní vrstvu nad koncepty zmíněnými výše. Docker je platforma na vývoj, distribuci a nasazování aplikací. 
+
+Docker se zkládá z těchto funkcí:
+
+
+\begin{itemize}  
+\item Docker Engine (jádro Docker ekosystému)
+\item Docker Compose (definice celé infrastrukury pomocí jednoho souboru, nenabízí detailní konfiguraci a proto nebude využit)
+\item Docker Swarm (orchestrace kontejnerů na HA klusterech, nebude využito)
+\item Docker Registry (úložiště Docker obrazů)
+\item Universal Control Plane (management kontejnerů a klusterů v byznys prostředí, nebude využito)
+\item Docker Secrets (management hesel ve Swarmu)
+\item Docker Content Trust (ukládání a validace značek (tagů) u Docker obrazů)
+
+\end{itemize}
+
+
+\subsubsection{Docker Engine}
+
+Docker Engine je jádro Docker ekosystému, založený na client-server architektuře, která má 3 hlavní komponenty -- Docker démon, REST API poskytované Docker démonem a CLI klient (příkaz docker).
+
+
+
+
+\paragraph{Docker Daemon}
+
+Docker démon běží na stroji (jako root) a je zodpovědný za poslouchání na REST API, odkud zpracovává požadavky od Docker klientů. Spravuje také Docker objekty pro kontejnery, obrazy instancí, sítě, diskové objekty.
+
+
+Existuje také projekt Podman, který nabízí možnost spouštení kontejnerů bez běžícího démona. 
+
+\paragraph{Docker Client}
+
+Docker klient je využíván pro komunikaci s API na démonu. Toto je primární způsob komunikace s démonem.
+
+
+
+
+V této práci je docker využit pro kontejnerizaci plánovací aplikace a poté je nasazen do Kubernetes.
 
 % impl via cgroups, unionfs
 
@@ -512,7 +558,7 @@ IaC plně standardizuje konfiguraci infrastruktury a díky tomu nenechává moc 
 
 
 
-\paragraph{Samodokumentují se systémy}
+\paragraph{Samodokumentující se systémy}
 
 Obvzáště v malých a pružných projektech se bojujeme s tím, aby dokumentace byla užitečná a přesně popisující daný problém. S tím, jak dokumentaci, či program upravujeme, tím více je pravděpodobnost nekonzistence dokumentace a problému vyšší. Další problém je to, že různí lidé mají různé způsoby psaní dokumentace a jejich vysvětlení nemusí být hned čtenáři zřejmé. I díky tomu většina dokumentací přesně nereprezentuje to, co daný problém znamená. IaC toto řeší tím, že definici a dokumentaci generuje přímo z kódu a právě kvůli tomu máme informace vždy aktuální. K tomu je třeba dopsat jen malé části dokumentace k dovysvětlení hůře pochopitelných částí.  
 
@@ -562,8 +608,17 @@ Pro zvýšení důvěry ve správnost a kvalitu softwaru, Fowler et al. doporuč
 % traefik 
 \subsection{Zabezpečení Kubernetes clusteru}
 
-
+% Principle of Least Privilege
 % scanovani imagu
+
+
+\section{CI Pipeline}
+
+
+% Gitlab CI
+% Jenkins
+% Circle CI
+
 
 \chapter{Možná vylepšení do budoucnosti}
 
@@ -670,9 +725,36 @@ Pro zvýšení důvěry ve správnost a kvalitu softwaru, Fowler et al. doporuč
 	\bibitem{ha-k8s}
 
 
+	
 	Elastisys, “Setting up highly available kubernetes clusters.”
 	https://elastisys.com/wp-content/uploads/2018/
 	01/kubernetes-ha-setup.pdf. [Online
+
+
+	\bibitem{priv-container}
+
+	Jesse Hertz. Abusing privileged and unprivileged linux containers. Whitepaper,
+	NCC Group, 2016.
+
+	\bibitem{hardening-container}
+
+	Aaron Grattafiori. Understanding and hardening linux containers. Whitepaper,
+NCC Group, 2016.
+
+\bibitem{microservices-article}
+
+Martin Fowler and James Lewis. Microservices. https://martinfowler.com/
+articles/microservices.html, 2014. Accessed: 29.08.2017
+
+\bibitem{microservices-book}
+
+Sam Newman. Building microservices: designing fine-grained systems. ” O’Reilly
+Media, Inc.”, 2015.
+
+\bibitem{docker-saigon}
+
+Docker Saigon. Docker internals. http://docker-saigon.github.io/post/
+Docker-Internals/, 2016. Accessed: 23.07.2017.
 \end{thebibliography}
 
 
