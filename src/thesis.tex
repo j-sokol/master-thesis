@@ -114,33 +114,39 @@ První částí je plánovač cest ve městech. Výstupem navrhovaného plánova
 
 Druhou částí je navržení nasazení aplikace do distribuovaného systému Kubernetes. Bude diskutováno, proč Kubernetes byl vybrán a jeho součásti budou popsány. V nasazení má být brán důraz na několik faktorů. Jedním z ním je bezpečnost aplikace běžící v otevřeném internetu. Tedy je důležité mít komunikaci s aplikací řešenou šifrovaně. Práce bude popisovat autentizaci a autorizaci přístupů do jednotlivých částí API rozhraní aplikace. Důležitá je též vysoká dostupnost aplikace, budou tedy popsány mechanismy vysoké dostupnosti v distribuovaném systému, a to i při opakovaném nasazování. Budou diskutovány způsoby nasazení, mezi ně patřící Blue/Green deployment, Carnary releases, Rolling updates atp. Nasazování bude řešeno automatizovaně, spolu s porovnáním poskytovatelů CD (automatizovaných deploymentů/nasazení).
 
-
-
-
 \chapter{Teoretická část}
 \section{Základy teorie grafů}
 
-Pro pochopení problému hledání cest je prvně třeba definovat jednotlivé stavební bloky. Práce tedy v kapitolce níže popíše relevantní definice z teorie grafů.
+Pro pochopení problému hledání cest je prvně třeba definovat jednotlivé stavební bloky. Práce tedy v kapitole níže popíše relevantní definice z teorie grafů.
 
 \subsection{Graf}
 
 \begin{defn}{Graf}\label{thm:graf}
 	
-	
-	Graf (jednoduchý neorientovaný graf) je uspořádaná dvojice $G = (V,E)$, kde V je množina vrcholů a $E$ je množina hran – množina vybraných dvouprvkových podmnožin množiny vrcholů. \cite{zaklady-teorie-grafu}
-	\end{defn}
+Graf (jednoduchý neorientovaný graf) je uspořádaná dvojice $G = (V,E)$, kde $V$ je množina vrcholů a $E$ je množina hran –- množina vybraných dvouprvkových podmnožin množiny vrcholů. \cite{zaklady-teorie-grafu}
+
+\end{defn}
 
 \begin{defn}{Hrana, vrchol}\label{thm:graf}
 
 Hranu mezi vrcholy $u$ a $v$ označujeme jako $\{u, v\}$. 
 
-Vrcholy spojené hranou nazýváme vrcholy sousední. Značkou $V(G)$ označujeme množinu vrcholů grafu $G$, množinu hran označujeme jako $E(G)$.
+Vrcholy spojené hranou nazýváme vrcholy sousední. Značkou $V(G)$ označujeme množinu vrcholů grafu $G$, množinu hran označujeme jako $E(G)$. \cite{zaklady-teorie-grafu}
+
 \end{defn}
 
 \begin{defn}{Orientovaný graf}\label{thm:graf}
 
-Orientovaný graf je uspořádaná dvojice $D = (V, E)$, kde $E \subseteq V \times V$ . 
+Orientovaný graf je uspořádaná dvojice $D = (V, E)$, kde $E \subseteq V \times V$. \cite{zaklady-teorie-grafu}
+
 \end{defn}
+
+\begin{figure}[H]\centering
+	\includesvg[width=0.3\textwidth]{graphs/oriented_graph.drawio.svg}
+
+	\caption[Příklad orientovaného grafu s ohodnocenými hranami]{Příklad orientovaného grafu s ohodnocenými hranami}\label{fig:float}
+\end{figure}
+
 
 Všechny dále zmíněné grafy budou orientované, tj. orientace hrany je důležitá.
 
@@ -149,7 +155,6 @@ Všechny dále zmíněné grafy budou orientované, tj. orientace hrany je důle
 \subsection{Ohodnocení hran}
 
 Tím hlavním rozdílem mezi časově závislým a časově nezávislým grafem je právě způsob ohodnocení hran. U časově nezávislého modelu nám stačí přiřadit hraně konstatní hodnotu. U časově závislého je ohodnocení hran v ruzné denní časy různé.
-
 
 \subsection{Cesta}
 
@@ -161,27 +166,29 @@ Podgrafu $H \subseteq	 G$, který je isomorfní nějaké cestě, říkáme cesta
 Jinak řečeno, cesta $P$ je sekvence uzlů tak, že pro každý $1 \leq	i < k$ platí podmínka $(v_i, v_{i+1}) \in	 E$. 
 
 \begin{figure}[H]\centering
-	% \includegraphics[width=0.5\textwidth, angle=30]{cvut-logo-bw}
 	\includesvg[width=0.5\textwidth]{graphs/path.drawio.svg}
 
-	\caption[Příklad obrázku]{Cesta délky $n$}\label{fig:float}
+	\caption[Cesta délky $n$]{Cesta délky $n$}\label{fig:float}
 \end{figure}
 
-% \includesvg[width=\textwidth]{graphs/path.drawio.svg}
 
-(obrázek cesty)
+\begin{defn}{Délka cesty}\label{thm:graf}
 
+	Délka cesty je součet jejich ohocnocení hran podél cesty.
+	\end{defn}
+
+	
 \begin{defn}{Kružnice}\label{thm:graf}
 
 Kružnice délky $n$ má $n \geq 3$ vrcholů spojených do jednoho cyklu $n$ hranami.
 \end{defn}
 
-(obrázek kružnice)
+\begin{figure}[H]\centering
+	\includesvg[width=0.5\textwidth]{graphs/circle.drawio.svg}
 
-\begin{defn}{Délka cesty}\label{thm:graf}
+	\caption[Kružnice délky $n$]{Kružnice délky $n$}\label{fig:float}
+\end{figure}
 
-Délka cesty je součet jejich ohocnocení hran podél cesty.
-\end{defn}
 
 
 \section{Plánování cest}
@@ -194,7 +201,7 @@ Podkapitoly níže představí časově závislé a časově nezávislé modely,
 
 \subsubsection{Časově nezávislý model}
 
-Způsoby dopravy, kde se nemusíme řídit žádným jízdím řádem, či předem určenými zastávkami, přiřazujeme k časově nezávislému modelu. Mezi tyto způsoby dopravy řadíme například jízdní kola, taxi, chůzi, služby sdílení aut (carsharing), atp. K plánování cest v takovémto modelu můžeme využít konvenčních algoritmů. Určitě jsou rozdíly mezi různými dopravními prostředky, například  pro cyklistické kolo je třeba nastavit jinou cestovní rychlost, než na auto. 
+Způsoby dopravy, kde se nemusíme řídit žádným jízdím řádem, či předem určenými zastávkami, přiřazujeme k časově nezávislému modelu. Mezi tyto způsoby dopravy řadíme například jízdní kola, taxi, chůzi, služby sdílení aut (carsharing) atp. K plánování cest v takovémto modelu můžeme využít konvenčních algoritmů. Určitě jsou rozdíly mezi různými dopravními prostředky, například  pro cyklistické kolo je třeba nastavit jinou cestovní rychlost, než na auto. 
 
 
 Silniční síť je modelována jako časově nezávislý model, tj. jako orientovaný graf $G = (V, A)$, kde $V$ je množina uzlů a $A$ je množina hran spojující uzly. Kžižovatka je reprezentována jako hrana $ s \in V $ a silnice mezi křižovatkami je reprezentována jako  $ (s, t) \in A $, kde $s \neq t $. Ke každé hraně je přiřazena váhová funkce $l(s, t)$, vracící nenulovou hodnotu a korespondující času, za který úsek s daným prostředkem můžeme ujet. Vzdálenost $dist(s,t)$ je rovna součtu všech vzdáleností v cestě mezi uzly $s$ a $t$.
@@ -576,6 +583,24 @@ V našem případě využijeme k popisu infrastruktury program Terraform. Terraf
 
 Terraform popisuje infrastrukturu pomocí konfiguračních souborů, jež jsou psány v jazyce HCL. Hashicorp Configuration Languag (HCL) je doménově specifický jazyk vyvinutý uvnitř firmy HashiCorp.
 
+\subsubsection{Návrh architektury}
+
+
+\begin{figure}[H]\centering
+	\includesvg[width=1.2\textwidth]{graphs/aws-diagram.drawio.svg}
+
+	\caption[Příklad orientovaného grafu s ohodnocenými hranami]{Příklad orientovaného grafu s ohodnocenými hranami}\label{fig:float}
+\end{figure}
+
+
+\subsubsection{Návrh kubernetes clusteru}
+
+\begin{figure}[H]\centering
+	\includesvg[width=1\textwidth]{graphs/kubernetes.drawio.svg}
+
+	\caption[Rozvržení podů a služeb v Kubernetes clusteru]{Rozvržení podů a služeb v Kubernetes clusteru}\label{fig:float}
+\end{figure}
+
 
 % Nasazeni kubernetes
 
@@ -605,7 +630,24 @@ Pro zvýšení důvěry ve správnost a kvalitu softwaru, Fowler et al. doporuč
 \subsection{API brána}
 
 
+\begin{figure}[H]\centering
+	\includesvg[width=1.2\textwidth]{graphs/api-gateway.drawio.svg}
+
+	\caption[Diagram komunikace klienta se službou]{Diagram komunikace klienta se službou}\label{fig:float}
+\end{figure}
+
+
+
 % traefik 
+\subsection{Nastavení sítě}
+
+% \begin{figure}[H]\centering
+% 	\includesvg[width=1\textwidth]{graphs/vpc.drawio.svg}
+
+% 	\caption[Příklad orientovaného grafu s ohodnocenými hranami]{Příklad orientovaného grafu s ohodnocenými hranami}\label{fig:float}
+% \end{figure}
+
+
 \subsection{Zabezpečení Kubernetes clusteru}
 
 % Principle of Least Privilege
@@ -613,6 +655,12 @@ Pro zvýšení důvěry ve správnost a kvalitu softwaru, Fowler et al. doporuč
 
 
 \section{CI Pipeline}
+
+% \begin{figure}[H]\centering
+% 	\includesvg[width=\textwidth]{graphs/CICD.drawio.svg}
+
+% 	\caption[Příklad orientovaného grafu s ohodnocenými hranami]{Příklad orientovaného grafu s ohodnocenými hranami}\label{fig:float}
+% \end{figure}
 
 
 % Gitlab CI
