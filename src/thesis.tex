@@ -377,17 +377,19 @@ Existuje také projekt Podman, který nabízí možnost spouštení kontejnerů 
 Docker klient je využíván pro komunikaci s API na démonu. Toto je primární způsob komunikace s démonem.
 
 
-
-
 V této práci je docker využit pro kontejnerizaci plánovací aplikace a poté je nasazen do Kubernetes.
 
 % impl via cgroups, unionfs
 
 % zminit kontejnerizaci bez demona (name?)
 
-% kontejner image + vrstvys
+% kontejner image + vrstvy
 
 \subsubsection{Architektura Dockeru a komponenty}
+\subsubsection{Docker image a Docker kontejner}
+
+
+Docker obraz (image) je soubor vytvořený z jeho definice či šablony, zvaného Dockerfile.  
 
 \subsection{Frameworky pro orchestraci kontejnerů}
 
@@ -407,7 +409,23 @@ Kubernetes je třetí generace služby pro řízení kontejnerů od Googlu, pře
 
 % Kubernetes introduces Application-Oriented Infrastructure (AOI) with two motivations:
 % • abstracting away details of machine and operating system from application developer and deployment
-% • single application process per container Design Pattern entails that managing containers mean managing applications, therefore, it shifts the Kube API from machine-oriented to application-oriented and, improves application deployment and introspection
+% • single application process per container 
+
+% Design Pattern entails that managing containers mean managing applications, therefore, it shifts the Kube API from machine-oriented to application-oriented and, improves application deployment and introspection
+
+Kubernetes uvádí aplikačně orientovanou architekturu (Application-Oriented Infrastructure AOI)\cite{as-k8s-san-kho-lin}
+s motivací:
+
+
+\begin{itemize}  
+	
+	
+	
+
+\item  Co nejvíce zabstraktnit HW stroj a operační systém od aplikace a nasazení 
+\item  razí pravidlo jedoho procesu na jeden kontejner. Díky tomu pokud řídíme a ovládáme proces, řídíme i aplikaci. Proto posouvá Kubernetes API z infrastrukturně orientovaného na aplikačne orientovaný a zlepšuje vhled (observability) na aplikace a jejich nasazení
+\end{itemize}
+
 
 
 % service discovery
@@ -418,7 +436,6 @@ Kubernetes je třetí generace služby pro řízení kontejnerů od Googlu, pře
 
 % Kubebench
 
-
 % service mesh
 
 
@@ -426,20 +443,41 @@ Kubernetes je třetí generace služby pro řízení kontejnerů od Googlu, pře
 
 \subsubsection{Vlastní nasazení vs Kubernetes as a Service}
 
+Kubernetes je poměrně složitý systém na nasazení a také na následnou údržbu. Nastavení Kubernetes pro běh aplikace v produčním prostředí může být velice zdlouhavé a časově náročné. V případě bezpečnostních chyb v linuxovém jádře je třeba aktualizovat uzly, na kterých běží master i worker služby. Při běhu kubernetes on-premise (tj. na vlastním železe) je třeba takové změny vykonávat ručně.
+
+Poskytovatelé cloudových služeb nabízí kubernetes distribuce u kterých úkoly jako aktualizace Kubernetes, aktualizace operačního systému či například monitoring jsou již automatizované. Takové řešení se nazývá Managed Kubernetes, či Kubernetes as a Service (Kubernetes jako služba). 
+
+Kvůli důvodům zmíněným výše bylo rozhodnuto, že bude využito možností managovaného přístupu ke Kubernetes. Popisu nabídky v roce 2020 a následného výběru nejvhodnější distribuce bude věnována následující kapitola.
 
 
 \subsubsection{Výběr managované služby}
 
 
-Kapitola níže popíše nejvíce populární aktuálně dostupné managované distrubuce Kubernetes. Poté bude nastíněn výběr Kubernetes distribuce.s
+Kapitola níže popíše nejvíce populární aktuálně dostupné managované distrubuce Kubernetes. Poté bude nastíněn výběr Kubernetes distribuce. V současné době všichni největší poskytovatelé cloudových služeb nabízí managovaný Kubernetes. Některé jsou více integrované do jejich Cloud platformy, některé méně. 
 
 \paragraph{DOKS}
+
+DOKS (Digital Ocean Kubernetes Service) je distribuce od cloudového poskytovatele Digital Ocean. Mezi hlavní výhody DOKS je rychlost vytvoření clusteru, která je nejkratší ze všech poskytovatelů. Další nespornou výhodou, je, že Kubernetes je poměrně čistý (Vanila Kubernetes) a pro začátečníka takové prostředí může být ideální, protože rozdílů od oficiální dokumentace není mnoho. 
+
+Mezi nevýhody patří poměrně malá nastavitelnost různých parametrů, jako síť, typ load balanceru, atp. 
+
+
 \paragraph{GKE}
-\paragraph{DOKS}
-% DOKS
-% GKE
-% EKS
 
+GKE (Google Kubernetes Engine) je služba nabízená na GCP (Google Cloud Platform). 
+
+		% vysoka integrace ktery vypada nativne (google)
+
+
+\paragraph{EKS}
+
+EKS (Elastic Kubernetes Service) je služba od AWS (Amazon Web Services). EKS nabízí velké propojení s AWS službami, což s sebou nese výhody, i nevýhody. Výhodou je, že užití EKS je poté téměř bez operačních úkonů a běží bez větších zákroků. Nevýhodou je tzv. vendor-lockin, tj. vysoká komplexita při přechodu z jedné cloudové platformy na druhou.
+
+% integrace s iam
+
+% AWS operators
+
+Nakonec jsem vybral právě EKS díky největším znalostem právě s AWS platformou. Návrh a nastavení clusteru bude popsán v praktické části práce. 
 
 % odkaz na praktickou cast popisujici EKS a AWS komponenty
 
@@ -520,12 +558,9 @@ Kapitola níže popíše nejvíce populární aktuálně dostupné managované d
 \subsubsection{Hardening kontejneru}
 
 
-
-
 \section{Nasazení plánovače}
 
 \subsection{Distribuovaná architektura}
-
 
 
 \subsubsection{Softwarově definovaná infrastruktura}
@@ -533,7 +568,6 @@ Kapitola níže popíše nejvíce populární aktuálně dostupné managované d
 S příchodem cloudu a virtualizace jako takové přišel i nespočet nových nástrojů a platforem, díky kterým začne vznikat portfolio systémů, o které se většinou musíme starat. V důsledku komplexnosti portfolia pomocných programů tedy i krok k více softwarově definované infrastruktuře. Softwarově definovaná architektura (většinou nazývaná jako Infrastructure as Code, zkráceně IaC) je pokus o využití maximálního potenciálu aktuální IT infrastruktury. Kief Morris popisuje IaC následovně
 
 
-	
 \begin{quotation}
 Infrastruktura jako kód je přístup k administraci IT infrastruktury v době cloudu, s využitím mikroslužeb, automatického nasazování a založeném na praktikách ze softwarového inženýrství.  
 \end{quotation}
@@ -585,6 +619,7 @@ Terraform popisuje infrastrukturu pomocí konfiguračních souborů, jež jsou p
 
 \subsubsection{Návrh architektury}
 
+% Architektura systemu a designova rozhodnuti
 
 \begin{figure}[H]\centering
 	\includesvg[width=1.2\textwidth]{graphs/aws-diagram.drawio.svg}
@@ -604,7 +639,6 @@ Terraform popisuje infrastrukturu pomocí konfiguračních souborů, jež jsou p
 
 % Nasazeni kubernetes
 
-% Architektura systemu a designova rozhodnuti
 
 % Pridani secretu do k8s
 
@@ -690,6 +724,7 @@ Pro zvýšení důvěry ve správnost a kvalitu softwaru, Fowler et al. doporuč
 \section{Vylepšení na architektuře}
 
 
+
 \subsection{Service mesh}
 
 
@@ -716,75 +751,75 @@ Pro zvýšení důvěry ve správnost a kvalitu softwaru, Fowler et al. doporuč
 
 	% ŠAMALÍK, Adam. Extension of OpenStack Modules for Ansible Platform. Brno, 2016. Bachelor’s thesis. Brno University of Technology, Faculty of Information Technology. Supervisor Hruška Martin.
 
-	\bibitem{zaklady-teorie-grafu}
+\bibitem{zaklady-teorie-grafu}
 
-	Základy Teorie Grafů pro (nejen) informatiky, Doc. RNDr. Petr Hliněný, Ph.D., Fakulta Informatiky Masarykova Univerzita, 2010
+Základy Teorie Grafů pro (nejen) informatiky, Doc. RNDr. Petr Hliněný, Ph.D., Fakulta Informatiky Masarykova Univerzita, 2010
 
-	\bibitem{multimodal-route-planning}
+\bibitem{multimodal-route-planning}
 
-	Multi-Modal Route Planning, Thomas Pajor, Institut fur Theoretische Informatik, Universitat Karlsruhe (TH), Germany, 2009
+Multi-Modal Route Planning, Thomas Pajor, Institut fur Theoretische Informatik, Universitat Karlsruhe (TH), Germany, 2009
 
-	\bibitem{route-planning-in-transportation-networks}
-	Route Planning in Transportation Networks, HANNAH BAST, DANIEL DELLING, ANDREW V. GOLDBERG, MATTHIAS MÜLLER-HANNEMANN, THOMAS PAJOR, PETER SANDERS, DOROTHEA WAGNER, RENATO F. WERNECK, Microsoft Research, 2014
+\bibitem{route-planning-in-transportation-networks}
+Route Planning in Transportation Networks, HANNAH BAST, DANIEL DELLING, ANDREW V. GOLDBERG, MATTHIAS MÜLLER-HANNEMANN, THOMAS PAJOR, PETER SANDERS, DOROTHEA WAGNER, RENATO F. WERNECK, Microsoft Research, 2014
 
-	\bibitem{modelling-of-preferences-in-multimodal-routing-algorithms}
+\bibitem{modelling-of-preferences-in-multimodal-routing-algorithms}
 
-	Modelling of preferences in multimodal routing algorithms, Santtu Saijets, Master’s Thesis, Aalto University, 2018
+Modelling of preferences in multimodal routing algorithms, Santtu Saijets, Master’s Thesis, Aalto University, 2018
 
-	\bibitem{time-dependent-networks-as-models-to-achieve-fast-exact-time-table-queries}
+\bibitem{time-dependent-networks-as-models-to-achieve-fast-exact-time-table-queries}
 
-	Gerth Stølting Brodal and Riko Jacob. Time-dependent networks as models to achieve fast exact time-table queries. Electronic Notes in Theoretical Computer Science, 92:3–15, 2004.
-
-
-	\bibitem{virt-comparison}
-
-	M. J. Scheepers, “Virtualization and containerization of application infrastructure: A comparison,” in 21st Twente Student Conference on IT, vol. 1,
-	pp. 1–7, 2014.
-
-	\bibitem{monitoring-smart-cities}
-
-	S. Muralidharan, G. Song, and H. Ko, “Monitoring and managing iot applications in smart cities using kubernetes,” CLOUD COMPUTING 2019,
-	p. 11, 2019.
-
-	\bibitem{k8s-avail-manager}
-
-	L. A. Vayghan, M. A. Saied, M. Toeroe, and F. Khendek, “Kubernetes as an availability manager for microservice applications,” 1901.04946, 2019.
-
-	\bibitem{microservice-devops}
-
-	A. Balalaie, A. Heydarnoori, and P. Jamshidi, “Microservices architecture enables devops: Migration to a cloud-native architecture,” Ieee Software, vol. 33, no. 3, pp. 42–52, 2016.
+Gerth Stølting Brodal and Riko Jacob. Time-dependent networks as models to achieve fast exact time-table queries. Electronic Notes in Theoretical Computer Science, 92:3–15, 2004.
 
 
-	\bibitem{microservice-docker}
+\bibitem{virt-comparison}
 
-	] D. Jaramillo, D. V. Nguyen, and R. Smart, “Leveraging microservices architecture by using docker technology,” in SoutheastCon 2016, pp. 1–5, IEEE,
-	2016.
+M. J. Scheepers, “Virtualization and containerization of application infrastructure: A comparison,” in 21st Twente Student Conference on IT, vol. 1,
+pp. 1–7, 2014.
 
-	\bibitem{docker-reproducible}
+\bibitem{monitoring-smart-cities}
 
-	C. Boettiger, “An introduction to docker for reproducible research,” ACM
-	SIGOPS Operating Systems Review, vol. 49, no. 1, pp. 71–79, 2015.
+S. Muralidharan, G. Song, and H. Ko, “Monitoring and managing iot applications in smart cities using kubernetes,” CLOUD COMPUTING 2019,
+p. 11, 2019.
 
-	\bibitem{cloud-native-experience}
+\bibitem{k8s-avail-manager}
 
-		A. Balalaie, A. Heydarnoori, and P. Jamshidi, “Migrating to cloud-native
-	architectures using microservices: an experience report,” in European Conference on Service-Oriented and Cloud Computing, pp. 201–215, Springer,
-	2015.
-	\bibitem{ha-k8s}
+L. A. Vayghan, M. A. Saied, M. Toeroe, and F. Khendek, “Kubernetes as an availability manager for microservice applications,” 1901.04946, 2019.
 
+\bibitem{microservice-devops}
 
-	
-	Elastisys, “Setting up highly available kubernetes clusters.”
-	https://elastisys.com/wp-content/uploads/2018/
-	01/kubernetes-ha-setup.pdf. [Online
+A. Balalaie, A. Heydarnoori, and P. Jamshidi, “Microservices architecture enables devops: Migration to a cloud-native architecture,” Ieee Software, vol. 33, no. 3, pp. 42–52, 2016.
 
 
-	\bibitem{priv-container}
+\bibitem{microservice-docker}
+
+] D. Jaramillo, D. V. Nguyen, and R. Smart, “Leveraging microservices architecture by using docker technology,” in SoutheastCon 2016, pp. 1–5, IEEE,
+2016.
+
+\bibitem{docker-reproducible}
+
+C. Boettiger, “An introduction to docker for reproducible research,” ACM
+SIGOPS Operating Systems Review, vol. 49, no. 1, pp. 71–79, 2015.
+
+\bibitem{cloud-native-experience}
+
+	A. Balalaie, A. Heydarnoori, and P. Jamshidi, “Migrating to cloud-native
+architectures using microservices: an experience report,” in European Conference on Service-Oriented and Cloud Computing, pp. 201–215, Springer,
+2015.
+\bibitem{ha-k8s}
+
+
+
+Elastisys, “Setting up highly available kubernetes clusters.”
+https://elastisys.com/wp-content/uploads/2018/
+01/kubernetes-ha-setup.pdf. [Online
+
+
+\bibitem{priv-container}
 
 	Jesse Hertz. Abusing privileged and unprivileged linux containers. Whitepaper,
 	NCC Group, 2016.
 
-	\bibitem{hardening-container}
+\bibitem{hardening-container}
 
 	Aaron Grattafiori. Understanding and hardening linux containers. Whitepaper,
 NCC Group, 2016.
@@ -802,7 +837,12 @@ Media, Inc.”, 2015.
 \bibitem{docker-saigon}
 
 Docker Saigon. Docker internals. http://docker-saigon.github.io/post/
-Docker-Internals/, 2016. Accessed: 23.07.2017.
+Docker-Internals/, 2016. Accessed: 23.07.2017., 
+
+\bibitem{as-k8s-san-kho-lin}
+
+
+San Kho Lin, Auto-scaling an optimisation algorithm using Docker and Kubernetes on the NeCTAR Research Cloud, UNIVERSITY OF MELBOURNE, 2018
 \end{thebibliography}
 
 
