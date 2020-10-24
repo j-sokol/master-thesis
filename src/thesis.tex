@@ -20,6 +20,8 @@
 \usepackage{dirtree} %directory tree visualisation
 \usepackage{svg}
 \usepackage{float}
+\usepackage{hyperref}
+
 
 
 % to create \paragraph like \subsubsubsection
@@ -204,7 +206,7 @@ Podkapitoly níže představí časově závislé a časově nezávislé modely,
 Způsoby dopravy, kde se nemusíme řídit žádným jízdím řádem, či předem určenými zastávkami, přiřazujeme k časově nezávislému modelu. Mezi tyto způsoby dopravy řadíme například jízdní kola, taxi, chůzi, služby sdílení aut (carsharing) atp. K plánování cest v takovémto modelu můžeme využít konvenčních algoritmů. Určitě jsou rozdíly mezi různými dopravními prostředky, například  pro cyklistické kolo je třeba nastavit jinou cestovní rychlost, než na auto. 
 
 
-Silniční síť je modelována jako časově nezávislý model, tj. jako orientovaný graf $G = (V, A)$, kde $V$ je množina uzlů a $A$ je množina hran spojující uzly. Kžižovatka je reprezentována jako hrana $ s \in V $ a silnice mezi křižovatkami je reprezentována jako  $ (s, t) \in A $, kde $s \neq t $. Ke každé hraně je přiřazena váhová funkce $l(s, t)$, vracící nenulovou hodnotu a korespondující času, za který úsek s daným prostředkem můžeme ujet. Vzdálenost $dist(s,t)$ je rovna součtu všech vzdáleností v cestě mezi uzly $s$ a $t$.
+Silniční síť je modelována jako časově nezávislý model, tj. jako orientovaný graf $G = (V, A)$, kde $V$ je množina uzlů a $A$ je množina hran spojující uzly. Kžižovatka je reprezentována jako hrana $ s \in V $ a silnice mezi křižovatkami je reprezentována jako  $ (s, t) \in A $, kde $s \neq t $. Ke každé hraně je přiřazena váhová funkce $l(s, t)$, vracící nenulovou hodnotu a korespondující času, za který úsek s daným prostředkem můžeme ujet. Vzdálenost $dist(s,t)$ je rovna součtu všech vzdáleností v cestě mezi uzly $s$ a $t$. \cite{multimodal-route-planning}
 
 
 
@@ -214,9 +216,9 @@ V minulé kapitole jsme diskutovali, jak řešit plánování cesty v silniční
 
 
 
-Jízdní řád může být modelován dvěmi základními přístupy, a to jako časově závislý (time-depended model) a časově rozšířený (time-expanded) model. V obou případech je model zobrazen jako orientovaný graf $G = (V, A)$. Oba modely mají své výhody a nevýhody, pro zjednodušení zde budeme hovořit pouze o časově závislém modelu.
+Jízdní řád může být modelován dvěmi základními přístupy, a to jako časově závislý (time-depended model) a časově rozšířený (time-expanded) model. V obou případech je model zobrazen jako orientovaný graf $G = (V, A)$. Oba modely mají své výhody a nevýhody, pro zjednodušení zde budeme hovořit pouze o časově závislém modelu. 
 
-Časově závislý model byl prvně prezentován v Brodal and Jacob (2004). Model má v učitých místech podobnosti k časově nezávislému modelu. V tomto modelu uzly  $ s \in V $ korespondují z zastávkám hromadné dopravy a hrana $ (s, t) \in A, s \neq t $ existuje, pokud dopravní prostředek jede ze stanice $s$ do stanice $t$ a nikde mezitím nezastavuje. Hlavním rozdílem k časově nezáviskému modelu je to, že hrana existuje pouze v určité časy a tedy čas cesty závisí na čase, kdy jsme dorazili do startovního uzlu. Tato informace je zakódována jako funkce doby cesty mezi uzly $s$ a $t$.
+Časově závislý model byl prvně prezentován v Brodal and Jacob (2004)\cite{time-dependent-networks-as-models-to-achieve-fast-exact-time-table-queries}. Model má v učitých místech podobnosti k časově nezávislému modelu. V tomto modelu uzly  $ s \in V $ korespondují z zastávkám hromadné dopravy a hrana $ (s, t) \in A, s \neq t $ existuje, pokud dopravní prostředek jede ze stanice $s$ do stanice $t$ a nikde mezitím nezastavuje. Hlavním rozdílem k časově nezáviskému modelu je to, že hrana existuje pouze v určité časy a tedy čas cesty závisí na čase, kdy jsme dorazili do startovního uzlu. Tato informace je zakódována jako funkce doby cesty mezi uzly $s$ a $t$.
 
 
 \subsection{Problém nejdřívějšího příjezdu}
@@ -292,7 +294,7 @@ Dvě hlavní virtualizační techniky jsou virtualizace založená na hypervisor
 
 \subsection{Hypervizor virtualizace}
 
-Virtualizace založená na hypervizorech umožnuje spouštění plných virtuálních strojů (VMs) na hypervisoru. Takové virtuální stroje se skládají z plného operačního systému, obsahujícího kernel (jádro), aplikaci a všechny závislosti. 
+Virtualizace založená na hypervizorech umožnuje spouštění plných virtuálních strojů (VMs) na hypervisoru. Takové virtuální stroje se skládají z plného operačního systému, obsahujícího kernel (jádro), aplikaci a všechny závislosti. \cite{virt-comparison}
 
 % Hypervisor jako takový je software běžící na hardwaru (např. VMWare ESXi), či jako další vrstva nad operačním systémem (Libvirt/KVM na Linuxu). 
 
@@ -644,7 +646,7 @@ Terraform popisuje infrastrukturu pomocí konfiguračních souborů, jež jsou p
 % Nasazeni kubernetes
 
 
-% Pridani secretu do k8s
+% Pridani secretu do k8s`
 
 % skalovatelnost
 
@@ -654,7 +656,7 @@ Terraform popisuje infrastrukturu pomocí konfiguračních souborů, jež jsou p
 
 \subsection{Automatizace infrastruktury}
 
-Pro zvýšení důvěry ve správnost a kvalitu softwaru, Fowler et al. doporučuje co nejvíce automatizovat opakované úkoly, jako například spouštění testů, vytváření kontejnerů, či nasazování. Dle jejich názoru by měl CD (continoous deployment) tvořit nasazení doslovně nudným. Také Newman  nazývá virtualizaci jako klíčovým faktorem k automatizaci infrastruktury, a to proto, že napomáhají k aotumatickému vytvoření a škálování virtuálních strojů pro vývojové či produkční prostředí.
+Pro zvýšení důvěry ve správnost a kvalitu softwaru, Fowler et al. \cite{microservices-article} doporučuje co nejvíce automatizovat opakované úkoly, jako například spouštění testů, vytváření kontejnerů, či nasazování. Dle jejich názoru by měl CD (continoous deployment) tvořit nasazení doslovně nudným. Také Newman \cite{microservices-book} nazývá virtualizaci jako klíčovým faktorem k automatizaci infrastruktury, a to proto, že napomáhají k aotumatickému vytvoření a škálování virtuálních strojů pro vývojové či produkční prostředí.
 
 
 
@@ -679,12 +681,18 @@ Pro zvýšení důvěry ve správnost a kvalitu softwaru, Fowler et al. doporuč
 % traefik 
 \subsection{Nastavení sítě}
 
+Diagram níže popisuje rozvržení sítě po plánovací aplikaci v cloudové platformě AWS. Základní oddělovací částí v AWS je VPC (Virtual Private Cloud)\cite{aws-vpc}, umožňující vytvoření logicky izolované části AWS cloudu do které se nasazují AWS zdroje dle nastavení virtuální sítě.
+
 \begin{figure}[H]\centering
 	\includesvg[width=1\textwidth]{graphs/vpc.drawio.svg}
 
 	\caption[Rozvržení subnetů využitých pro aplikaci v jednom AWS regionu]{Rozvržení subnetů využitých pro aplikaci v jednom AWS regionu}\label{fig:float}
 \end{figure}
 
+Pro plánovací aplikaci využíváme jednoho AWS regionu, který se obvykle skládá ze tří dostupnostních zón (AZ, Availability zones)\cite{aws-azs}. Každá dostupnostní zóna je jedno či více datacenter v jednom regionu, datacentra jsou navíc stavěna tak, aby každá z nich byla vystavěna jiným živelným rizikám. Tedy pro příklad, pokud je jedna dostupnostní zóna náchylná povodním, druhá AZ bude stavěna na kopci. Podobně to funguje s energetickým mixem či síťovým připojením. 
+
+
+Jak je zřejmé z diagramu, v našem případě vytváříme v každé AZ jeden soukromý a jeden veřejný subnet. Co subnety obsahují bude diskutováno v následujících kapitolách.
 
 \subsection{Zabezpečení Kubernetes clusteru}
 
@@ -698,7 +706,6 @@ Pro zvýšení důvěry ve správnost a kvalitu softwaru, Fowler et al. doporuč
 % Gitlab CI
 % Jenkins
 % Circle CI
-
 
 
 \begin{figure}[H]\centering
@@ -854,6 +861,18 @@ Docker-Internals/, 2016. Accessed: 23.07.2017.,
 
 
 San Kho Lin, Auto-scaling an optimisation algorithm using Docker and Kubernetes on the NeCTAR Research Cloud, UNIVERSITY OF MELBOURNE, 2018
+
+
+\bibitem{aws-vpc}
+
+
+\url{https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html
+}
+
+\bibitem{aws-azs}
+
+\url{https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-availability-zones
+}
 \end{thebibliography}
 
 
