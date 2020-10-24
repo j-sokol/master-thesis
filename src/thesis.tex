@@ -386,6 +386,8 @@ V této práci je docker využit pro kontejnerizaci plánovací aplikace a poté
 % kontejner image + vrstvy
 
 \subsubsection{Architektura Dockeru a komponenty}
+
+
 \subsubsection{Docker image a Docker kontejner}
 
 
@@ -424,6 +426,8 @@ s motivací:
 
 \item  Co nejvíce zabstraktnit HW stroj a operační systém od aplikace a nasazení 
 \item  razí pravidlo jedoho procesu na jeden kontejner. Díky tomu pokud řídíme a ovládáme proces, řídíme i aplikaci. Proto posouvá Kubernetes API z infrastrukturně orientovaného na aplikačne orientovaný a zlepšuje vhled (observability) na aplikace a jejich nasazení
+
+
 \end{itemize}
 
 
@@ -624,14 +628,14 @@ Terraform popisuje infrastrukturu pomocí konfiguračních souborů, jež jsou p
 \begin{figure}[H]\centering
 	\includesvg[width=1.2\textwidth]{graphs/aws-diagram.drawio.svg}
 
-	\caption[Příklad orientovaného grafu s ohodnocenými hranami]{Příklad orientovaného grafu s ohodnocenými hranami}\label{fig:float}
+	\caption[Návrh architektury v AWS cloudu]{Návrh architektury v AWS cloudu}\label{fig:float}
 \end{figure}
 
 
 \subsubsection{Návrh kubernetes clusteru}
 
 \begin{figure}[H]\centering
-	\includesvg[width=1\textwidth]{graphs/kubernetes.drawio.svg}
+	\includesvg[width=1.3\textwidth]{graphs/kubernetes.drawio.svg}
 
 	\caption[Rozvržení podů a služeb v Kubernetes clusteru]{Rozvržení podů a služeb v Kubernetes clusteru}\label{fig:float}
 \end{figure}
@@ -675,31 +679,38 @@ Pro zvýšení důvěry ve správnost a kvalitu softwaru, Fowler et al. doporuč
 % traefik 
 \subsection{Nastavení sítě}
 
-% \begin{figure}[H]\centering
-% 	\includesvg[width=1\textwidth]{graphs/vpc.drawio.svg}
+\begin{figure}[H]\centering
+	\includesvg[width=1\textwidth]{graphs/vpc.drawio.svg}
 
-% 	\caption[Příklad orientovaného grafu s ohodnocenými hranami]{Příklad orientovaného grafu s ohodnocenými hranami}\label{fig:float}
-% \end{figure}
+	\caption[Rozvržení subnetů využitých pro aplikaci v jednom AWS regionu]{Rozvržení subnetů využitých pro aplikaci v jednom AWS regionu}\label{fig:float}
+\end{figure}
 
 
 \subsection{Zabezpečení Kubernetes clusteru}
 
 % Principle of Least Privilege
 % scanovani imagu
+% CIS Benchmark
 
 
 \section{CI Pipeline}
 
-% \begin{figure}[H]\centering
-% 	\includesvg[width=\textwidth]{graphs/CICD.drawio.svg}
-
-% 	\caption[Příklad orientovaného grafu s ohodnocenými hranami]{Příklad orientovaného grafu s ohodnocenými hranami}\label{fig:float}
-% \end{figure}
-
-
 % Gitlab CI
 % Jenkins
 % Circle CI
+
+
+
+\begin{figure}[H]\centering
+	\includesvg[width=1\textwidth]{graphs/CICD.drawio.svg}
+
+	\caption[Diagram v CI pipeline]{Diagram v CI pipeline}\label{fig:float}
+\end{figure}
+
+
+\subsection{Nasazení aplikace}
+\subsubsection{Helm}
+
 
 
 \chapter{Možná vylepšení do budoucnosti}
