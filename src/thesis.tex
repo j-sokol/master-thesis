@@ -369,7 +369,7 @@ Docker Engine je jádro Docker ekosystému, založený na client-server architek
 
 \paragraph{Docker Daemon}
 
-Docker démon běží na stroji (jako root) a je zodpovědný za poslouchání na REST API, odkud zpracovává požadavky od Docker klientů. Spravuje také Docker objekty pro kontejnery, obrazy instancí, sítě, diskové objekty.
+Docker démon běží na stroji (jako root \footnote{Root je privilegovaný uživatel na Unix-like operačních systémech}) a je zodpovědný za poslouchání na REST API, odkud zpracovává požadavky od Docker klientů. Spravuje také Docker objekty pro kontejnery, obrazy instancí, sítě, diskové objekty.
 
 
 Existuje také projekt Podman, který nabízí možnost spouštení kontejnerů bez běžícího démona. 
@@ -393,7 +393,7 @@ V této práci je docker využit pro kontejnerizaci plánovací aplikace a poté
 \subsubsection{Docker image a Docker kontejner}
 
 
-Docker obraz (image) je soubor vytvořený z jeho definice či šablony, zvaného Dockerfile.  
+Docker obraz\footnote{Docker obraz -- Docker image} je soubor vytvořený z jeho definice či šablony, zvaného Dockerfile.  
 
 \subsection{Frameworky pro orchestraci kontejnerů}
 
@@ -422,10 +422,6 @@ s motivací:
 
 
 \begin{itemize}  
-	
-	
-	
-
 \item  Co nejvíce zabstraktnit HW stroj a operační systém od aplikace a nasazení 
 \item  razí pravidlo jedoho procesu na jeden kontejner. Díky tomu pokud řídíme a ovládáme proces, řídíme i aplikaci. Proto posouvá Kubernetes API z infrastrukturně orientovaného na aplikačne orientovaný a zlepšuje vhled (observability) na aplikace a jejich nasazení
 
@@ -447,7 +443,7 @@ s motivací:
 
 % zabezpeceni kubernetes
 
-\subsubsection{Vlastní nasazení vs Kubernetes as a Service}
+\subsubsection{Vlastní nasazení Kubernetes vs Kubernetes as a Service}
 
 Kubernetes je poměrně složitý systém na nasazení a také na následnou údržbu. Nastavení Kubernetes pro běh aplikace v produčním prostředí může být velice zdlouhavé a časově náročné. V případě bezpečnostních chyb v linuxovém jádře je třeba aktualizovat uzly, na kterých běží master i worker služby. Při běhu kubernetes on-premise (tj. na vlastním železe) je třeba takové změny vykonávat ručně.
 
@@ -531,7 +527,11 @@ Nakonec jsem vybral právě EKS díky největším znalostem právě s AWS platf
 % - zpusob wrappovani nad osrm a otp popsane vyse
 % - singlemodal routing
 % 	- approaches to singlemodal
+% verejna doprava
+% 
 % 	- singlemodal bike
+% servisni zony
+% vraceni v docku
 % 	- singlemodal 
 % - multimodal
 % 	- simplifying the graph - transit hubs
@@ -571,7 +571,7 @@ Nakonec jsem vybral právě EKS díky největším znalostem právě s AWS platf
 
 \subsubsection{Softwarově definovaná infrastruktura}
 
-S příchodem cloudu a virtualizace jako takové přišel i nespočet nových nástrojů a platforem, díky kterým začne vznikat portfolio systémů, o které se většinou musíme starat. V důsledku komplexnosti portfolia pomocných programů tedy i krok k více softwarově definované infrastruktuře. Softwarově definovaná architektura (většinou nazývaná jako Infrastructure as Code, zkráceně IaC) je pokus o využití maximálního potenciálu aktuální IT infrastruktury. Kief Morris popisuje IaC následovně
+S příchodem cloudu a virtualizace jako takové přišel i nespočet nových nástrojů a platforem, díky kterým začne vznikat portfolio systémů, o které se většinou musíme starat. V důsledku komplexnosti portfolia pomocných programů tedy i krok k více softwarově definované infrastruktuře. Softwarově definovaná architektura (většinou nazývaná jako Infrastructure as Code, zkráceně IaC) je pokus o využití maximálního potenciálu aktuální IT infrastruktury. Kief Morris \cite{kief-morris-iac} popisuje IaC následovně
 
 
 \begin{quotation}
@@ -614,11 +614,11 @@ Obvzáště v malých a pružných projektech se bojujeme s tím, aby dokumentac
 
 S tím, jak máme definici infrastruktury v kódu, se nám otvírá možnost použít verzovací systém pro sledování změn, a případně vrácení se ke starší verze infrastruktury, v případě, že se objevily nějaké problémy.
 
-Verzovací systémy (Version Control System, VCS) nám nabízí zobrazení změn, obsahující všechny implementované změny, důvod, a osobu, která změny vytvořila. Taková funkce přidává užitečnost v případě oprav kódu, protože se jednouduše můžeme obrátit na člověka, který danou část změnil. 
+Verzovací systémy \footnote{VCS -- Version Control System} nám nabízí zobrazení změn, obsahující všechny implementované změny, důvod, a osobu, která změny vytvořila. Taková funkce přidává užitečnost v případě oprav kódu, protože se jednouduše můžeme obrátit na člověka, který danou část změnil. 
 
 \paragraph{Terraform}
 
-V našem případě využijeme k popisu infrastruktury program Terraform. Terraform je nástroj na automatizaci infrastruktury od společnosti HashiCorp a je napsán v jazyce Go. Hlavní výhodou Terraformu je, že je multiplatformní, tj. podporuje mnoho různých cílů (v Terraform terminologii zvané backendy), mezi němi jsou AWS Cloud, GCP, Azure, ale i bare metal nasazování, jako KVM (libvirt).
+V našem případě využijeme k popisu infrastruktury program Terraform. Terraform je nástroj na automatizaci infrastruktury od společnosti HashiCorp a je napsán v jazyce Go. Hlavní výhodou Terraformu je, že je multiplatformní, tj. podporuje mnoho různých cílů \footnote{v Terraform terminologii zvané backendy}, mezi němi jsou  cloudoví poskytovatelé, jako AWS, GCP, Azure, ale i bare metal  možnosti nasazení, jako KVM (libvirt) \cite{tf-libvirt}.
 
 
 Terraform popisuje infrastrukturu pomocí konfiguračních souborů, jež jsou psány v jazyce HCL. Hashicorp Configuration Languag (HCL) je doménově specifický jazyk vyvinutý uvnitř firmy HashiCorp.
@@ -701,11 +701,36 @@ Jak je zřejmé z diagramu, v našem případě vytváříme v každé AZ jeden 
 % CIS Benchmark
 
 
-\section{CI Pipeline}
+\section{Continuous integration \& continuous deployment}
+
+Podkapitolky níže popíšou koncepty Continuous integration, Continuous delivery (dohromady také zvané jako CI/CD), dále ukážou současnou nabídku takových služeb. Dále bude jedna ze služeb vybrána a její technologie bude diskutována.
+
+% TODO: teoreticky popis
+\subsection{Continuous integration}
+
+Cílem Continuous integrace (CI) \cite{fowler-ci}je propojení práce developera (jako například kompilace aplikace, sestavení kontejneru, spuštění testů) a kódu aplikace. Tato integrace by se měla dít s vyšší frekvencí, např. nekolikrát denně, či po každém commitu do repozitáře s kódem.
+
+Částí CI procesu může být i kontrola kódu (code review) od kolegů developerů.
+
+Výstupem CI procesu je připravená verze aplikace (např. tedy binární soubor nebo kontejner), který se nazývá artefakt (artifact).
+
+
+Častá integrace a kvalitní testové pokrytí pomáhá s důvěrou v kód na straně jak developerů, tak i na straně serverových administrátorů. 
+
+\subsection{Continuous delivery}
+
+Continuous delivery (CD) je v podstatě automatizace nasazení aplikací a řadí se za Continuous integration. CD tedy popisuje možností nasazení artefaktů z CI do různých aplikačních prostředí, jako je např. produkce.\cite{humble-ci}
+
+Každý tým má různé potřeby při stavění takových CD. Někde je třeba více testovacích (develop) prostředí, jiné týmy vyžadují mnoho staging (prostředí identické produkčnímu ale bez reálné zátěže) prostředí. Při CD vytvoření takového prostředí může být plně automatizováno, případně se může jednat o několik (potvrzujících) kliknutí.
 
 % Gitlab CI
 % Jenkins
 % Circle CI
+
+\subsection{Návrh CI/CD pro plánovací službu}
+
+Diagram níže ukazuje CI/CD proces pro plánovací službu z této práce.
+
 
 
 \begin{figure}[H]\centering
@@ -714,14 +739,29 @@ Jak je zřejmé z diagramu, v našem případě vytváříme v každé AZ jeden 
 	\caption[Diagram v CI pipeline]{Diagram v CI pipeline}\label{fig:float}
 \end{figure}
 
+Kód aplikace je uložen v git repozitáři na serveru GitHub. Po zapsání změn do repozitáře se spustí Unit Testový krok a pokud proběhne úspěšně, z aplikace se začne vytvářet kontejner. V případě, že změny jsou v master, staging, či develop branchi, tak obraz je pushnut do kontejner repozitáře (ECR). CD proces poté čeká na vstup od uživatele, který svým schválením může aplikaci nasadit do respektivních prostředí.
 
-\subsection{Nasazení aplikace}
-\subsubsection{Helm}
 
+\section{Nasazení aplikace}
+
+Kapitola níže popisuje praktické nasazení aplikace do distribuovaného prostředí Kubernetes. Ukáže, které Kubernetes zdroje jsou potřebné a jak je možné proces automatizovat s nástrojem Helm. 
+
+
+\subsection{Helm}
+
+
+
+Standardním způsobem definování zdrojů v Kubernetes clusteru je vytvoření konfiguračního souboru pro každý zdroj. V případě, kdy spouštíme aplikaci s různým nastavením (jako produkční a testovací prostředí, atp.), bychom museli jednotlivé konfigurační soubory duplikovat. Tím míříme k redundantnímu kódu, kterému se chceme vyhnout (pokud dodržujeme DRY \footnote{DRY -- Do not repeat yourself} pravidlo).
+
+K nasazení je využito nástroje Helm \cite{helm-docs}.
+
+Helm pomáhá s vytvořením dynamických konfiguračních souborů s použitím proměnných. Helm používá Go Template Engine, kterým generuje Kubernetes zdroje s využitím předem definovaných proměnných. Právě kvůli tomu můžeme vytvořit pouze jeden resource template (šablonu Kubernetes zdroje), ze kterého se vygenerují lehce odlišné zdroje pro každé prostředí. 
+
+Využijeme Helmu verze 3, který všechny změny vypočítává na klientské části (na počítači u vývojáře), což je změna oproti verzi druhé, kde bylo třeba nasazovat Tiller (server část Helmu v2) do Kubernetes.
 
 
 \chapter{Možná vylepšení do budoucnosti}
-
+Kapitola níže popisuje možná vylepšení a je rozdělena na vylepšení na aplikaci a na vylepšení na infrastruktuře.
 
 \section{Vylepšení na plánovací aplikaci}
 
@@ -873,6 +913,34 @@ San Kho Lin, Auto-scaling an optimisation algorithm using Docker and Kubernetes 
 
 \url{https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-availability-zones
 }
+
+\bibitem{fowler-ci}
+
+Fowler, Martin. Continuous Integration. martinFowler.com. [online], May 1,
+2006 [cit. April 2, 2020]. Available from https://martinfowler.com/articles/
+continuousIntegration.html.
+
+\bibitem{humble-ci}
+
+Humble, Jez. Continuous Delivery - Priciples. continuousdelivery.com. [online],
+2017 [cit. April 2, 2020]. Available from https://continuousdelivery.com/
+principles/
+\bibitem{helm-docs}
+
+https://helm.sh/docs/
+
+
+\bibitem{kief-morris-iac}
+
+Infrastructure as Code: Managing Servers in the Cloud
+Přední strana obálky
+Kief Morris
+O'Reilly Media, 2016 - Počet stran: 336
+
+\bibitem{tf-libvirt}
+
+https://github.com/dmacvicar/terraform-provider-libvirt
+
 \end{thebibliography}
 
 
