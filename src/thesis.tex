@@ -18,6 +18,38 @@
 % \usepackage{amssymb} %additional math symbols
 
 \usepackage{dirtree} %directory tree visualisation
+\usepackage{svg}
+\usepackage{float}
+\usepackage{hyperref}
+
+
+
+% to create \paragraph like \subsubsubsection
+\usepackage{titlesec}
+
+\setcounter{secnumdepth}{4}
+
+\titleformat{\paragraph}
+{\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+\titlespacing*{\paragraph}
+{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+
+
+% \usepackage{etoolbox}
+% \AtBeginEnvironment{quote}{\singlespacing\small}
+
+\usepackage{csquotes}
+
+
+\usepackage{amsthm}
+
+\theoremstyle{plain}
+\newtheorem{thm}{Definice}[chapter] % reset theorem numbering for each chapter
+
+\theoremstyle{definition}
+\newtheorem{defn}[thm]{Definice} % definition numbers are dependent on theorem numbers
+\newtheorem{exmp}[thm]{Příklad} % same for example numbers
 
 % % list of acronyms
 % \usepackage[acronym,nonumberlist,toc,numberedsection=autolabel]{glossaries}
@@ -39,8 +71,8 @@
 \author{Jan Sokol} %jméno autora bez akademických titulů
 \supervisor{Ing. Ondřej Guth Ph.D.}
 \acknowledgements{TODO.}
-\abstractCS{Tato práce se zabývá návrhem plánovače cest v  geoprostorových grafech, konkrétně s omezením na cesty ve městě. Plánovač nabízí různé způsoby dopravy a v určitých kombinacích také využívá vícera možností prostředků najednou. Plánovací služba je navržena dle principů tzv. mikroslužeb  (microservices). K plánovací službě je přístup navržen pomocí REST API. Do souvislosti s mikroslužbami je často spojováno využití technologií jako Docker a Kubernetes, kterých bude využito k nasazení aplikace do distribuovaného a škálovaného systému v druhé části práce. Při nasazení do Kubernetes je brán důraz na zabezpečení aplikace, bude tedy popsána autentikace a autorizace přístupů do systému. Část práce je věnována možnostem škálování aplikace v distribuovaném systému Kubernetes, s řešením přivýpadcích serverů či datacenter. Bude brán důraz na vysokou dostupnost aplikace jak při běžném provozu, tak při častém nasazování.}
-\abstractEN{This thesis deals with design of a trip planner in geospatial graphs, with a limitation of routes in cities. Route planner offers various means of transport. Multiple ways of transport are combined into one single trip when certain combinations are used. Route planning service is designed using principles of so called microservices. Access to the planning results is designed using REST API. Technologies like Docker and Kubernetes are usually connected with microservices, those technologies will be used to deploy planner indo distributed and scallable system in the second part of the thesis.  While deploying the service in an distributed system an emphasis is taken on security of the whole architecture, therefore authentication and authorization into the system will be described in the work. Part of the thesis is dedicated to the application scalability,  with cases when servers or datacenters are down. Importance will be put on high availability of the application, both in usual day to day business and also while deploying the microservices.}
+\abstractCS{Tato práce se zabývá návrhem plánovače cest v  geoprostorových grafech, konkrétně s omezením na cesty ve městě. Plánovač nabízí různé způsoby dopravy a v určitých kombinacích také využívá vícera možností prostředků najednou. Plánovací služba je navržena dle principů tzv. mikroslužeb  (microservices). K plánovací službě je přístup navržen pomocí REST API. Technologií jako Docker a Kubernetes je využito k nasazení aplikace do distribuovaného a škálovaného systému v druhé části práce. Při nasazení do Kubernetes je brán důraz na zabezpečení aplikace, je popsána autentikace a autorizace přístupů do systému. Část práce je věnována možnostem škálování aplikace v distribuovaném systému Kubernetes, s řešením při výpadcích serverů či datacenter. Je brán důraz na vysokou dostupnost aplikace jak při běžném provozu, tak při častém nasazování.}
+\abstractEN{This thesis deals with design of a trip planner in geospatial graphs, with a limitation of routes in cities. Route planner offers various means of transport. Multiple ways of transport are combined into one single trip when certain combinations are used. Route planning service is designed using principles of so called microservices. Access to the planning results is designed using REST API. Technologies  Docker and Kubernetes will be used to deploy the route planner into distributed and scallable system in the second part of the thesis.  While deploying the service in an distributed system an emphasis is taken on security of the whole architecture, therefore authentication and authorization while connecting to the system is described in the work. Part of the thesis is dedicated to the application scalability including cases when servers or datacenters are down. Importance is put on high availability of the application, both in usual day to day business and also while deploying route planner microservices.}
 \placeForDeclarationOfAuthenticity{V~Praze}
 \declarationOfAuthenticityOption{4} %volba Prohlášení (číslo 1-6)
 \keywordsCS{navigace, plánování cest, multimodální plánovač, hledání nejkratších cest, otp, osrm, dijskra, a star, contracted hierarchies, distribuovaný systém, vysoká dostupnost, mikroslužba, kubernetes, eks, docker, kontejnerizace, autentikace, autorizace, api gateway, oauth2}
@@ -54,17 +86,17 @@
 
 \begin{introduction}
 	%sem napište úvod Vaší práce
-V současné době je plánování cest velmi důležité a na důležitosti stále více přibývá. A s tím, jak dopravní síť začíná být čím dál více složitější a naše pohyblivost po městě začíná být čím dál více důležitější, tak také stoupá potřeba po efektivním a rychléím plánovači. Plánovač je obsažen ve většině současných chytrých mobilních telefonů a také většína leteckých či drážních společností poskytuje nějaký způsob naplánování cesty s jejich dopravními prostředky. 
+V současné době je plánování cest velmi důležité a na důležitosti stále více přibývá. A s tím, jak dopravní síť začíná být čím dál složitější a naše pohyblivost po městě začíná být čím dál více důležitější, tak také stoupá potřeba po efektivním a rychlém plánovači. Plánovač je obsažen ve většině současných chytrých mobilních telefonů a také většina leteckých či drážních společností poskytuje nějaký způsob naplánování cesty s jejich dopravními prostředky. 
 
-Současné plánovací aplikace mají až na výjimky jedno společné omezení - to je, že plánují jen ve svém vlastním způsobu dopravy. Když využijeme aplikaci hromadné dopravy, plánovač nám ukáže pouze tramvaje, metro a jiné prostředky MHD. Podobně je to s GPS navigací, kde můžeme hledat cestu jen v silniční síti. 
+Současné plánovací aplikace mají až na výjimky jedno společné omezení -- to je, že plánují jen ve svém vlastním způsobu dopravy. Když využijeme aplikaci hromadné dopravy, plánovač nám ukáže pouze tramvaje, metro a jiné prostředky MHD. Podobně je to s GPS navigací, kde můžeme hledat cestu jen v silniční síti. 
 
-Díky tomu, že současnost poskytuje ve velkých městech velké množství způsobů dopravy,  tak vidíme, že jedna z možností je tyto způsoby dopravy kombinovat. Toto je něco, což často není tolik využíváno - už jen proto, že takovýto plán obsahující více možností je složitý na složení, alespoň manuálně. Pro zkombinování více způsobů dopravy je třeba vytvořit pokročilý plánovač, který spočítá více typů dopravy. Takový plánovač se nazývá multomodální.
+Díky tomu, že současnost poskytuje ve velkých městech velké množství způsobů dopravy, vidíme, že jedna z možností je tyto způsoby dopravy kombinovat. Toto je něco, co často není tolik využíváno -- už jen proto, že takovýto plán obsahující více možností je složitý na složení, alespoň manuálně. Pro zkombinování více způsobů dopravy je třeba vytvořit pokročilý plánovač, který spočítá více typů dopravy. Takový plánovač se nazývá multomodální.
 
-Tato pláce má tedy za jeden z cílů toto. Vybrat počáteční lokaci, konečnou lokaci, společně s časem odjezdu (pro tuto práci bude brán pouze případ aktuálního času)  a způsoby dopravy (ku příkladu sdílené městské prostědky, jako kola, skůtry, koloběžky, taxi, hromadná doprava) a daná aplikace vrátí seznam tras blízkých optimální trase. 
+Tato práce má tedy za jeden z cílů toto. Vybrat počáteční lokaci, konečnou lokaci, společně s časem odjezdu (pro tuto práci bude brán pouze případ aktuálního času)  a způsoby dopravy (ku příkladu sdílené městské prostředky, jako kola, skůtry, koloběžky, taxi, hromadná doprava) a daná aplikace vrátí seznam tras blízkých optimální trase. 
 
-Dalším stěžejním cílem je nasazení výše zmíněné aplikace do kontejnerizovaného, distribuvaného a škálovatelného prostředí. Spouštění programů v kontejnerech se v poslední době těší veliké oblibě, většinou z důvodu potřeby vysoké dostupnosti aplikace. Takové aplikace většinou přichází s určitými potřebami - měly by  být zabezpečené a  škálovatelné. V současnosti k takovým požadavkům přichází určitá řešení. 
+Dalším stěžejním cílem je nasazení výše zmíněné aplikace do kontejnerizovaného, distribuvaného a škálovatelného prostředí. Spouštění programů v kontejnerech se v poslední době těší veliké oblibě, většinou z důvodu potřeby vysoké dostupnosti aplikace. Takové aplikace většinou přichází s určitými potřebami -- měly by  být zabezpečené a  škálovatelné. V současnosti k takovým požadavkům přichází určitá řešení. 
 
-Jedním z řešení k nasazení takové aplikace je využití cloudových řešení, oproti využití nasazení přímo do konvenčních serverů, či virtuálních serverů.I přes to, že cloud je zajímavá alternativa, nenabízí vysokou dostupnost automaticky. Tedy pro to, aby aplikace byla vysoce dostupná, měla by být k takovým požadavkům navržena už od začátku (taková aplikace se nazývá cloud-native). Takové prostředí musí být také orchestováno, k čemu existují určité nástroje, kterým se tato práce bude také věnovat. 
+Jedním z řešení k nasazení takové aplikace je využití cloudových řešení, oproti využití nasazení přímo do konvenčních serverů, či virtuálních serverů. I přes to, že cloud je zajímavá alternativa, nenabízí vysokou dostupnost automaticky. Tedy pro to, aby aplikace byla vysoce dostupná, měla by být k takovým požadavkům navržena už od začátku (taková aplikace se nazývá cloud-native). Takové prostředí musí být také orchestováno, k čemu existují určité nástroje, kterým se tato práce bude také věnovat. 
 
 Práce představí kontejner s výše zmíněnou aplikací, spolu s tím orchestrační software, díky kterému se aplikace bude spravovat. Dále představí problémy při nasazování vysoce dostupné aplikace do orchestrovaného, kontejnerizovaného prostředí. 
 
@@ -74,32 +106,901 @@ Struktura a cíle jsou více do detailu popsány v kapitole níže.
 
 \chapter{Struktura a cíle práce}
 
-
 Diplomová práce je rozdělena do dvou hlavních bodů. Prvním je navrhnout a popsat aplikaci či systém, který bude plánovat cesty v geoprostorových grafech. Konkrétně je omezení  na cesty ve městech, a to s použitím různých metod dopravy. Se současným rozvojem sdílených dopravních prostředků ve městech bude služba využívat jak veřejné hromadné dopravy, tak i těchto sdílených vozidel. druhou částí je návrh a popis nasazení plánovací aplikace (mikroslužby) do distribuovaného systému.
 
 \section{Plánovač cest}
 
-
-První částí je plánovač cest ve městech. Výstupem navrhovaného plánovače budou cesty s použitím jednoho typu prostředku, ale také s jejich kombinacemi (takové kombinace, které dávají smysl — tento výběr bude také v práci diskutován).  Ke správnému návrhu a pochopení problematiky hledání cest budou popsány dva základní modely - model závislý a model nezávislý na čase. Na nich budou popsány algoritmy hledající nejkratší cesty.  K následému návrhu bude použit software publikovaný pod otevřenou licencí. U tohoto software práce popíše algoritmy, dle kterých jsou cesty v grafech hledány a na nihž je software stavěn. 
-
+První částí je plánovač cest ve městech. Výstupem navrhovaného plánovače budou cesty s použitím jednoho typu prostředku, ale také s jejich kombinacemi (takové kombinace, které dávají smysl —- tento výběr bude také v práci diskutován).  Ke správnému návrhu a pochopení problematiky hledání cest budou popsány dva základní modely -- model závislý a model nezávislý na čase. Na nich budou popsány algoritmy hledající nejkratší cesty.  K následému návrhu bude použit software publikovaný pod otevřenou licencí. U tohoto software práce popíše algoritmy, dle kterých jsou cesty v grafech hledány a na nich je software stavěn. 
 
 \section{Nasazení mikroslužby v distribuovaném systému}
 
+Druhou částí je navržení nasazení aplikace do distribuovaného systému Kubernetes. Bude diskutováno, proč Kubernetes byl vybrán a jeho součásti budou popsány. V nasazení má být brán důraz na několik faktorů. Jedním z ním je bezpečnost aplikace běžící v otevřeném internetu. Tedy je důležité mít komunikaci s aplikací řešenou šifrovaně. Práce bude popisovat autentizaci a autorizaci přístupů do jednotlivých částí API rozhraní aplikace. Důležitá je též vysoká dostupnost aplikace, budou tedy popsány mechanismy vysoké dostupnosti v distribuovaném systému, a to i při opakovaném nasazování. Budou diskutovány způsoby nasazení, mezi ně patřící Blue/Green deployment, Carnary releases, Rolling updates atp. Nasazování bude řešeno automatizovaně, spolu s porovnáním poskytovatelů CD (automatizovaných deploymentů/nasazení).
+
+\chapter{Teoretická část}
+\section{Základy teorie grafů}
+
+Pro pochopení problému hledání cest je prvně třeba definovat jednotlivé stavební bloky. Práce tedy v kapitole níže popíše relevantní definice z teorie grafů.
+
+\subsection{Graf}
+
+\begin{defn}{Graf}\label{thm:graf}
+	
+Graf (jednoduchý neorientovaný graf) je uspořádaná dvojice $G = (V,E)$, kde $V$ je množina vrcholů a $E$ je množina hran –- množina vybraných dvouprvkových podmnožin množiny vrcholů. \cite{zaklady-teorie-grafu}
+
+\end{defn}
+
+\begin{defn}{Hrana, vrchol}\label{thm:graf}
+
+Hranu mezi vrcholy $u$ a $v$ označujeme jako $\{u, v\}$. 
+
+Vrcholy spojené hranou nazýváme vrcholy sousední. Značkou $V(G)$ označujeme množinu vrcholů grafu $G$, množinu hran označujeme jako $E(G)$. \cite{zaklady-teorie-grafu}
+
+\end{defn}
+
+\begin{defn}{Orientovaný graf}\label{thm:graf}
+
+Orientovaný graf je uspořádaná dvojice $D = (V, E)$, kde $E \subseteq V \times V$. \cite{zaklady-teorie-grafu}
+
+\end{defn}
+
+\begin{figure}[H]\centering
+	\includesvg[width=0.3\textwidth]{graphs/oriented_graph.drawio.svg}
+
+	\caption[Příklad orientovaného grafu s ohodnocenými hranami]{Příklad orientovaného grafu s ohodnocenými hranami}\label{fig:float}
+\end{figure}
 
 
-Druhou částí je navržení nasazení aplikace do distribuovaného systému Kubernetes. Bude diskutováno, proč Kubernetes byl vybrán a jeho součásti budou popsány. V nasazení má být brán důraz na několik faktorů. Jedním z ním je bezpečnost aplikace běžící v otevřeném internetu. Tedy je důležité mít komunikaci s aplikací řešenou šifrovaně. Práce bude popisovat autentikaci a autorizaci přístupů do jednotilivých částí API rozhraní aplikace. Důležitá je též vysoká dostupnost aplikace, budou tedy popsány mechanismy vysoké dostupnosti v distribuovaném systému, a to i při opakovaném nasazování. Budou diskutovány způsoby nasazení, mezi ně patřící Blue/Green deployment, Carnary releases, Rolling updates, atp. Nasazování bude řešeno automatizovaně, spolu s porovnáním poskytovatelů CD (automatizovaných deploymentů/nasazení).
+Všechny dále zmíněné grafy budou orientované, tj. orientace hrany je důležitá.
+
+% [1] Za ́klady Teorie Graf ̊u  pro (nejen) informatiky 
+
+\subsection{Ohodnocení hran}
+
+Tím hlavním rozdílem mezi časově závislým a časově nezávislým grafem je právě způsob ohodnocení hran. U časově nezávislého modelu nám stačí přiřadit hraně konstatní hodnotu. U časově závislého je ohodnocení hran v ruzné denní časy různé.
+
+\subsection{Cesta}
+
+\begin{defn}{Cesta}\label{thm:graf}
+
+Podgrafu $H \subseteq	 G$, který je isomorfní nějaké cestě, říkáme cesta v $G$. 
+\end{defn}
+
+Jinak řečeno, cesta $P$ je sekvence uzlů tak, že pro každý $1 \leq	i < k$ platí podmínka $(v_i, v_{i+1}) \in	 E$. 
+
+\begin{figure}[H]\centering
+	\includesvg[width=0.5\textwidth]{graphs/path.drawio.svg}
+
+	\caption[Cesta délky $n$]{Cesta délky $n$}\label{fig:float}
+\end{figure}
 
 
-\chapter{Analýza a návrh}
+\begin{defn}{Délka cesty}\label{thm:graf}
 
-\chapter{Realizace}
+	Délka cesty je součet jejich ohocnocení hran podél cesty.
+	\end{defn}
+
+	
+\begin{defn}{Kružnice}\label{thm:graf}
+
+Kružnice délky $n$ má $n \geq 3$ vrcholů spojených do jednoho cyklu $n$ hranami.
+\end{defn}
+
+\begin{figure}[H]\centering
+	\includesvg[width=0.5\textwidth]{graphs/circle.drawio.svg}
+
+	\caption[Kružnice délky $n$]{Kružnice délky $n$}\label{fig:float}
+\end{figure}
+
+
+
+\section{Plánování cest}
+
+
+
+\subsection{Modely}
+
+Podkapitoly níže představí časově závislé a časově nezávislé modely, nutné k pochopení plánování cest v těchto modelech.
+
+\subsubsection{Časově nezávislý model}
+
+Způsoby dopravy, kde se nemusíme řídit žádným jízdím řádem, či předem určenými zastávkami, přiřazujeme k časově nezávislému modelu. Mezi tyto způsoby dopravy řadíme například jízdní kola, taxi, chůzi, služby sdílení aut (carsharing) atp. K plánování cest v takovémto modelu můžeme využít konvenčních algoritmů. Určitě jsou rozdíly mezi různými dopravními prostředky, například  pro cyklistické kolo je třeba nastavit jinou cestovní rychlost, než na auto. 
+
+
+Silniční síť je modelována jako časově nezávislý model, tj. jako orientovaný graf $G = (V, A)$, kde $V$ je množina uzlů a $A$ je množina hran spojující uzly. Kžižovatka je reprezentována jako hrana $ s \in V $ a silnice mezi křižovatkami je reprezentována jako  $ (s, t) \in A $, kde $s \neq t $. Ke každé hraně je přiřazena váhová funkce $l(s, t)$, vracící nenulovou hodnotu a korespondující času, za který úsek s daným prostředkem můžeme ujet. Vzdálenost $dist(s,t)$ je rovna součtu všech vzdáleností v cestě mezi uzly $s$ a $t$. \cite{multimodal-route-planning}
+
+
+
+\subsubsection{Časově závislý model}
+
+V minulé kapitole jsme diskutovali, jak řešit plánování cesty v silničním (časově nezávislém) modelu. V této kapitole budeme zkoumat model časově závislý, tedy pro veřejnou dopravu. Zde se budeme dotýkat pouze prostředků jako autobus, tramvaj, vlak -- tedy těch, které zavisí na nějakém předem určeném jízdním řádu. Z toho vychází název "časově závislý".
+
+
+
+Jízdní řád může být modelován dvěmi základními přístupy, a to jako časově závislý (time-depended model) a časově rozšířený (time-expanded) model. V obou případech je model zobrazen jako orientovaný graf $G = (V, A)$. Oba modely mají své výhody a nevýhody, pro zjednodušení zde budeme hovořit pouze o časově závislém modelu. 
+
+Časově závislý model byl prvně prezentován v Brodal and Jacob (2004)\cite{time-dependent-networks-as-models-to-achieve-fast-exact-time-table-queries}. Model má v učitých místech podobnosti k časově nezávislému modelu. V tomto modelu uzly  $ s \in V $ korespondují z zastávkám hromadné dopravy a hrana $ (s, t) \in A, s \neq t $ existuje, pokud dopravní prostředek jede ze stanice $s$ do stanice $t$ a nikde mezitím nezastavuje. Hlavním rozdílem k časově nezáviskému modelu je to, že hrana existuje pouze v určité časy a tedy čas cesty závisí na čase, kdy jsme dorazili do startovního uzlu. Tato informace je zakódována jako funkce doby cesty mezi uzly $s$ a $t$.
+
+
+\subsection{Problém nejdřívějšího příjezdu}
+
+
+\subsection{Hledání nejkratší cesty}
+
+\subsubsection{many to many}
+
+\subsubsection{one to many}
+
+\subsubsection{many to one}
+
+
+\subsection{Algoritmy k hledání nejkratší cesty}
+\subsubsection{Hledání cest v silničních sítích
+
+\paragraph{Dijskra}
+\paragraph{A star}
+\paragraph{Contraction Hierarchies}
+\subsubsection{Hledání cest v sítích s městskou hromadnou dopravou}
+
+
+
+\subsection{Multimodální plánování cest}
+
+
+\section{Nasazení aplikace}
+
+
+\subsection{Koncept mikroslužeb}
+
+Architektura mikroslužeb, jež nabrala na popularitě během posledních let či desetiletí, je způsob návrhu, při kterém míříme k vytvoření množiny malých, lehkých a vzájemně nezáviských služeb. Každá ze služeb běží ve svém procesu nezávislých na ostatních. Všechny služby mezi sebou komunikují na daném mechanismu/protokolu.
+
+Opačným přístupem je monilitická architektura. U monolitického přístupu je celá aplikační logika sepsána jako společný kód (codebase). V případě, že programátor chce změnit jakkoli malou část kódu, je vždy třeba zkompilovat, sestavit a nasadit celou aplikaci. Tato vlastnost monolitické architektury může způsobit komplikace při vývoji aplikace, a to obvzlášť v případě, že aplikace je velká.
+
+I proto jsou automatická nasazení (CI/CD) mnohem jednodužší v architektuře mikroslužeb. V takovém připadě není nutno kompilovat, či sestavovat celou aplikaci, ale pouze změny v dané mikroslužbě, kterou měníme. Jedním z důsledků je i to, že můžeme jednodužšeji se orientovat v kódu aplikace a také jednodužšeji nacházíme a opravujeme chyby (bugy).
+
+Díky tomu můžeme dodávat a nasazovat do produkčního prostředí nové verze aplikace nepoměrně rychleji. Proto je také možno nasazovat menší změny a to s rychlejší frekvencí. 
+
+Dalším problémem monolitické aplikace může být škálování. A to proto, že celá aplikace musí být škálovatelná. U přístupu mikroslužeb, kde každá komponenta, či služba je izolovaná a samostatně škálovatelná, můžeme v případě potřeby naškálovat jen ty části, u kterých je to aktuálně z důvodu vysokého zatížení nutné.
+
+Mezi výhody také patří to, že můžeme jednotlivé instance mikroslužeb rozdělit a distribuovat na několik fyzických strojů, či dokonce datacenter. Pro to, aby služby, co běží na různých serverech, spolu komunikovali, je nutné, aby byl implementovaný Service Discovery protokol. 
+
+V kontrastu k tomu musí být monolitická architektura nasazena na jednom stroji ve stejném prostředí, připadně rozdělena pomocí HA funkcionalit.
+
+% Zde se také dostáváme k problému škálovaní. Monilitická architektura z principu je škálovatelná vertikálně, tedy přidáním hardwarových zdrojů, jako CPU, či paměti RAM. U přístupu mikroslužeb je možno přidání více instancí.
+
+\begin{figure}[H]\centering
+	% \includegraphics[width=0.5\textwidth, angle=30]{cvut-logo-bw}
+	\includesvg[width=0.5\textwidth]{graphs/microservice-vs-monolith.drawio.svg}
+
+	\caption[Monolitická architektura vs. architektura mikroslužeb]{Monolitická architektura vs. architektura mikroslužeb}\label{fig:float}
+\end{figure}
+
+
+Obrázek výše ukazuje hlavní rozdíly mezi monolitickou a mikroslužbovou architekturou. I přes zjevné výhody architektury založené na mikroslužbách, je nutné podotknout i její nevýhody. Jedním z nich je interní komunikace mezi službami. Ty mohou být implementovány buď jako REST, GraphQl API, či jako RPC volání. Díky tomu by měla být latence mezi službami brána v zřetel. Další věc je, že taková to komunikace vyžaduje stabilní a bezpečnou síť.
+
+Také s tím, jak aplikace založená na mikroslužbách začíná narůstat, začne se objevovat potřeba pro kvalitní monitoring a tracing. Dalším krokem je implementace service mesh komunikace.
+
+
+
+\section{Distribuované výpočetní systémy}
+
+
+
+\subsection{Virtualizace}
+
+Virtualizace je koncept zavedený již dekády. Koncept odkazuje na vytvoření objektu/zdroje, jako je např. operační systém, hardware, úložiště, či síť, který je na vrstvě abstrahované or reálné vrstvy.
+
+Tyto emulované a virtualizované systémy mohou být nastavovány, udržovány a replikovány mnohem jednodužšeji a na požádání. Další věcí je, že virtualizací jsou zdroje přiřazovány uživatelům, či aplikacím dle jejich reálných potřeb a díky tomu mohou být zdroje mnohem lépe využity. Toto velice pomáhá jak ke snížení nákladů, tak také k šetření životního prostředí. 
+
+Poskytovatelé cloudových služeb, jako Amazon AWS, či Microsoft Azure využívají virtualizace v jiejich datacentrech a následně zdroje nabízejí jako službu (Infrastructure as a service, IaaS). 
+
+
+Virtualizaci můžeme najít jak na serverové části, tak na té klientské. V této práci budou zmíněny jen ty na serverové části.
+
+Dvě hlavní virtualizační techniky jsou virtualizace založená na hypervisoru a na kontejnerech, které popíšou kapitoly níže.
+
+\subsection{Hypervizor virtualizace}
+
+Virtualizace založená na hypervizorech umožnuje spouštění plných virtuálních strojů (VMs) na hypervisoru. Takové virtuální stroje se skládají z plného operačního systému, obsahujícího kernel (jádro), aplikaci a všechny závislosti. \cite{virt-comparison}
+
+% Hypervisor jako takový je software běžící na hardwaru (např. VMWare ESXi), či jako další vrstva nad operačním systémem (Libvirt/KVM na Linuxu). 
+
+Hypervisory se dále dělí do dvou základních částí, Hypervisor typu 1 a typu 2.
+
+Hypervisor typu 1 (také jako Baremetal Hypervisor) běží přímo na hardwaru daného počítače. Mezi ně patří například Xen, nebo  VMWare ESXi. 
+
+Hypervisory typu 2 (také jako hostovaný hypervisor) běží jako další vrstva nad operačním systémem. Mezi hostované hypervisory patří VirtualBox, QEMU, či VMWare Workstation. Minimálně u platformy x86 roveň oddělení virtuálního stroje od hypervisoru je poměrně robustní, protože CPU instrukce poskytují hardwarovou izolaci a útokový vektor ze strany hypervisoru není tak obrovský. I tak výzkumníci ukázali určité útoky.  
+
+
+
+\subsection{Kontejnerová virtualizace}
+
+% + kontejner historie, i.e chroot a solaris zones
+
+Virtualizace založená na kontejnerech (také nazývaná jako virtualizace na úrovni operačního systému, případně kontejnerizace) je odlehčená alternativa k hypervisorům. Tento způsob kontejnerizace využívá funkcí kernelu ze serveru, na kterém virtualizace běží a to tím, že vytváří instance oddělených user-spaců (ve kterých běží skupiny procesů), nazývaných kontejnery. 
+
+Kontejner výpadá z pohledu procesu běžícího uvnitř jako plnohodnotný operační systém. V realitě to ale je oddělený prostor uvnitř hostovacího operačního systému, se kterým sdílí zdroje (sdílí stejný kernel, tedy žádný hypervisor není potřeba). A tedy kontejnery nemají svůj virtualizované hardware (jako např. hypervizor virtualizace). 
+
+Díky tomu, že kontejnery neemulují žádný hardware, nepotřebují čas pro nastartování operačního systému. Proto nabízí velmi rychlé startovací časy (v milisekundách). Kontejner zabaluje všechny balíčky, které může potřebovat, jako například knihovny, binární soubory, či jiné konfigurace potřebné k nastavení operačního systému. Takovýto menší otisk přínáší několik výhod, jako vyšší výkonnost, zvýšenou bezpečnost či dobrou škálovatelnost.
+
+Virtualizace založená na kontejnerech může být implementována na jakémkolik operačním systému, každopádně populární techniky, jako třeba Docker jsou založeny na funkcích v Linux kernelu. 
+
+
+\subsubsection{Mechanismy kontejnerizace}
+
+Kontejnery jsou většinou vytvořeny pomocí následujících funkcí v jádře OS: kernel namespace (jmenný prostor v jádru) a cgroups (Control groups). Tyto funkce se zaměřují na vytváření skupin procesů, které jsou od sebe odděleny (kernel namespaces) a vynucují jim limity na zdroje (control groups).
+
+% V Linuxu je přiřazování zdrojů založeno na cgroups funkcionalitě (control groups).  
+
+Control Groups (or cgroups) jsou využívány na vynucení limitů na hardware zdroje, jako např. počet procesorů, procesorové využití, přiřazení paměti, atp. Taková omezení mohou být přiřazeny buď jednomu procesu, či množině procesů. Cgroups mohou být využity k zajíštění, aby jeden kontejner nezahltil systém využítím všech jeho zdrojů. 
+
+Pravidla jsou organizována ve stromové struktuře, jsou děděny a volitelně vrstvena (nestable).
+
+Cgroups mohou být vnímány jako vylepšení nad ulimity/rlimity. Nastavují se pomocí speciálního virtuálního souboru připojeném v cestě /sys/fs/cgroup a mohou být kdykoliv měněny.
+
+Mezi hlavní skupiny cgroup patří CPU, memory, BLKIO, devices, network nebo freezer. V případě, že jsou špatně nastaveny, tak taková chyba může být využita k útěku z kontejneru ven. 
+
+[The main cgroup subsystems are CPU, memory, BLKIO,
+devices, network and freezer. If configured wrong, this can also be a security issue, since
+it can be used for a container escape [36]. In context of container technology, most of
+cgroups management is abstracted away, with the exception of LXC [33].
+
+
+ Právě Docker virtualizaci se se bude věnovat další podkapitola.
+
+\subsection{Docker}
+
+V minulé části jsme popsali kontejnerovou virtualizaci a zde popíšeme reálnou implementaci. Docker přidává abstraktní vrstvu nad koncepty zmíněnými výše. Docker je platforma na vývoj, distribuci a nasazování aplikací. 
+
+Docker se zkládá z těchto funkcí:
+
+
+\begin{itemize}  
+\item Docker Engine (jádro Docker ekosystému)
+\item Docker Compose (definice celé infrastrukury pomocí jednoho souboru, nenabízí detailní konfiguraci a proto nebude využit)
+\item Docker Swarm (orchestrace kontejnerů na HA klusterech, nebude využito)
+\item Docker Registry (úložiště Docker obrazů)
+\item Universal Control Plane (management kontejnerů a klusterů v byznys prostředí, nebude využito)
+\item Docker Secrets (management hesel ve Swarmu)
+\item Docker Content Trust (ukládání a validace značek (tagů) u Docker obrazů)
+
+\end{itemize}
+
+
+\subsubsection{Docker Engine}
+
+Docker Engine je jádro Docker ekosystému, založený na client-server architektuře, která má 3 hlavní komponenty -- Docker démon, REST API poskytované Docker démonem a CLI klient (příkaz docker).
+
+
+
+
+\paragraph{Docker Daemon}
+
+Docker démon běží na stroji (jako root \footnote{Root je privilegovaný uživatel na Unix-like operačních systémech}) a je zodpovědný za poslouchání na REST API, odkud zpracovává požadavky od Docker klientů. Spravuje také Docker objekty pro kontejnery, obrazy instancí, sítě, diskové objekty.
+
+
+Existuje také projekt Podman, který nabízí možnost spouštení kontejnerů bez běžícího démona. 
+
+\paragraph{Docker Client}
+
+Docker klient je využíván pro komunikaci s API na démonu. Toto je primární způsob komunikace s démonem.
+
+
+V této práci je docker využit pro kontejnerizaci plánovací aplikace a poté je nasazen do Kubernetes.
+
+% impl via cgroups, unionfs
+
+% zminit kontejnerizaci bez demona (name?)
+
+% kontejner image + vrstvy
+
+\subsubsection{Architektura Dockeru a komponenty}
+
+
+\subsubsection{Docker image a Docker kontejner}
+
+
+Docker obraz\footnote{Docker obraz -- Docker image} je soubor vytvořený z jeho definice či šablony, zvaného Dockerfile.  
+
+\subsection{Frameworky pro orchestraci kontejnerů}
+
+
+V současné době mezi nejpopulárnější frameworky pro orchestraci kontejnerů patří Docker Swarm, Kubernetes a Apache Mesos. Mezi jejich nejčastěji zmiňované výhody patří vysoká dostupnost při nasazování při použití homogeních prostředí v datacentrech. Z důvodu nejvyšší podpory Kubernetes u cloudových poskytovatelů a také v současnosti největší komunitě se budeme v příštích kapitolách věnovat právě jemu a konkurenční technologie vynecháme.
+
+\subsection{Kubernetes}
+
+Kapitola níže uvede komponenty Kubernetes pro potřeby nasazení plánvací aplikace. Každopádně pro kompletní a více detailní informace doporučuji oficiální dokumentaci. 
+
+Jak definuje oficiální stránka, Kubernetes je orchestrační systém pro kontejnery, navržený pro nasazení, škálování, řízení a kompozici aplikačních konternerů napříč klustery serverů (produkční úrovně). Je to robustní systém pro řízení  kontejnerů, který nabízí virtuální abstrakční vrstvu nad poskytovatelem cloudových služeb a je velmi užitečný pro nasazování a udržování škálovatelných a distribuovaných systémů. Další velkou výhodou je, že pomáhá uživatelům konzistentně nasazovat aplikace na různé aplikační poskutovatele.
+
+Kubernetes je třetí generace služby pro řízení kontejnerů od Googlu, představen na Google Developer Forum v červnu 2014. Kubernetes použil mnoho nápadů z předchozí technologie od Googlu, Borgu. Původně byly aplikace uvnitř Googlu spouštěny právě pomocí Borgu, každopádně později vznikl zájem o podobnou technologii i mimo společnost. Toto motivovalo Google k vývoji právě Kubernetesu.  
+
+\subsubsection{Architektura Kubernetes}
+
+
+% Kubernetes introduces Application-Oriented Infrastructure (AOI) with two motivations:
+% • abstracting away details of machine and operating system from application developer and deployment
+% • single application process per container 
+
+% Design Pattern entails that managing containers mean managing applications, therefore, it shifts the Kube API from machine-oriented to application-oriented and, improves application deployment and introspection
+
+Kubernetes uvádí aplikačně orientovanou architekturu (Application-Oriented Infrastructure AOI)\cite{as-k8s-san-kho-lin}
+s motivací:
+
+
+\begin{itemize}  
+\item  Co nejvíce zabstraktnit HW stroj a operační systém od aplikace a nasazení 
+\item  razí pravidlo jedoho procesu na jeden kontejner. Díky tomu pokud řídíme a ovládáme proces, řídíme i aplikaci. Proto posouvá Kubernetes API z infrastrukturně orientovaného na aplikačne orientovaný a zlepšuje vhled (observability) na aplikace a jejich nasazení
+
+
+\end{itemize}
+
+
+
+% service discovery
+% master vs worker node
+
+%  PSP, Network policy
+% Cognito
+
+% Kubebench
+
+% service mesh
+
+
+% zabezpeceni kubernetes
+
+\subsubsection{Vlastní nasazení Kubernetes vs Kubernetes as a Service}
+
+Kubernetes je poměrně složitý systém na nasazení a také na následnou údržbu. Nastavení Kubernetes pro běh aplikace v produčním prostředí může být velice zdlouhavé a časově náročné. V případě bezpečnostních chyb v linuxovém jádře je třeba aktualizovat uzly, na kterých běží master i worker služby. Při běhu kubernetes on-premise (tj. na vlastním železe) je třeba takové změny vykonávat ručně.
+
+Poskytovatelé cloudových služeb nabízí kubernetes distribuce u kterých úkoly jako aktualizace Kubernetes, aktualizace operačního systému či například monitoring jsou již automatizované. Takové řešení se nazývá Managed Kubernetes, či Kubernetes as a Service (Kubernetes jako služba). 
+
+Kvůli důvodům zmíněným výše bylo rozhodnuto, že bude využito možností managovaného přístupu ke Kubernetes. Popisu nabídky v roce 2020 a následného výběru nejvhodnější distribuce bude věnována následující kapitola.
+
+
+\subsubsection{Výběr managované služby}
+
+
+Kapitola níže popíše nejvíce populární aktuálně dostupné managované distrubuce Kubernetes. Poté bude nastíněn výběr Kubernetes distribuce. V současné době všichni největší poskytovatelé cloudových služeb nabízí managovaný Kubernetes. Některé jsou více integrované do jejich Cloud platformy, některé méně. 
+
+\paragraph{DOKS}
+
+DOKS (Digital Ocean Kubernetes Service) je distribuce od cloudového poskytovatele Digital Ocean. Mezi hlavní výhody DOKS je rychlost vytvoření clusteru, která je nejkratší ze všech poskytovatelů. Další nespornou výhodou, je, že Kubernetes je poměrně čistý (Vanila Kubernetes) a pro začátečníka takové prostředí může být ideální, protože rozdílů od oficiální dokumentace není mnoho. 
+
+Mezi nevýhody patří poměrně malá nastavitelnost různých parametrů, jako síť, typ load balanceru, atp. 
+
+
+\paragraph{GKE}
+
+GKE (Google Kubernetes Engine) je služba nabízená na GCP (Google Cloud Platform). 
+
+		% vysoka integrace ktery vypada nativne (google)
+
+
+\paragraph{EKS}
+
+EKS (Elastic Kubernetes Service) je služba od AWS (Amazon Web Services). EKS nabízí velké propojení s AWS službami, což s sebou nese výhody, i nevýhody. Výhodou je, že užití EKS je poté téměř bez operačních úkonů a běží bez větších zákroků. Nevýhodou je tzv. vendor-lockin, tj. vysoká komplexita při přechodu z jedné cloudové platformy na druhou.
+
+% integrace s iam
+
+% AWS operators
+
+Nakonec jsem vybral právě EKS díky největším znalostem právě s AWS platformou. Návrh a nastavení clusteru bude popsán v praktické části práce. 
+
+% odkaz na praktickou cast popisujici EKS a AWS komponenty
+
+
+
+
+
+% ############ PRAKTIKALES
+% ############ PRAKTIKALES
+% ############ PRAKTIKALES
+% ############ PRAKTIKALES
+% ############ PRAKTIKALES
+% ############ PRAKTIKALES
+
+\chapter{Praktická část}
+
+
+\section{Multimodální plánovač}
+\subsection{Výběr již vytvořených plánovačů s otevřeným kódem}
+% - duvody pro propojeni vice jiz vytvorenych backendu
+% - narocnost na vyvoj vlastniho backendu z akademickych algoritmu (velmi mnoho features)
+
+\subsubsection{Open Source Routing Machine}
+% - vytvoreni grafu z vlozenych dat (Contractions, ohodniceni hran pomoc vyskoveho rasteru do kopce/z kopce, ..)
+
+% - OSRM
+% - upravy
+
+\subsubsection{Open Trip Planner}
+% - preporocessing steps
+
+
+V základě Open Trip Planner nenabízí API endpoint pro vytvoření časové matice\cite{otp-api-spec}. Proto musel být tento endpoint do aplikace doprogramován.
+
+\paragraph{GTFS Data}
+
+Rosšířeným formátem obsahující jízdní řády hromadné dopravy je General Transit Feed Specification (GTFS)\cite{gtfs-spec}. GTFS má v sobě zakódován relevantní informace, jako například geografické lokace, přes které linka projíždí, časy příjezdů a odjezdů ze stanic, či informace o stanicích. Dopravci mohou publikovat své jízdní řády jako GTFS soubory, které mohou vývojáři a aplikace dále využívat.
+
+Pro poskytnutí aktualizovaných informací, jako zpožděné odjezdy či příjezdy mohou být GTFS data dále rozšířena pomocí GTFS Realtime extension. S využitím GTFS Realtime extension mohou být oznámeny události jako výluky či nehody na tratích. V této práci se budeme zabývat pouze GTFS daty bez rozšíření.
+
+Díky integraci OTP s GTFS daty je právě této služby využíváno k plánování tras pomocí městské hromadné dopravy.
+
+
+% - GTFS data
+% 	- ziskani, potrebne upravy
+% 	- gtfs checkers that validate invalid entries, fix them and pass further
+
+% - uprava gtfs dat
+% - Comparison of Open Source routing services with OpenStreetMap Data for blind pedestrians 
+% - OTP
+% - upravy
+% - algo - A*, CH on non transit parts
+% - raptor not yet, in v2
+% - https://wiki.openstreetmap.org/wiki/OpenTripPlanner#Routing 
+% - https://blog.conveyal.com/opentripplanner-nearing-a-decade-of-progress-on-multimodal-routing-bc668432d3fe
+% - This is a list of articles, dissertations, and books that have inspired and informed both the existing OTP routing engine and some ongoing experiments. Currently, OpenTripPlanner uses a single time-dependent (as opposed to time-expanded) graph that contains both street and transit networks. Walk-only and bicycle-only trips are generally planned using the A* algorithm with a Euclidean heuristic or contraction hierarchies. Walk+Transit or Bike+Transit trips are planned using a variant of the MOA* algorithm with epsilon-dominance for path pruning and the Tung-Chew heuristic (a graph providing a lower bound on aggregate weight) for queue ordering.
+% - 
+
+
+\subsection{Návrh plánovací služby}
+
+% - popis multimodal routing služby, její API endpointy, komunikace s ostatními službami (databáze, sdílená cache obsahující lokace dopravních prostředků, podpůrné služby pro navigaci - OTP pro MHD, OSRM pro singlemodální plánování cest, ..)
+
+
+\subsubsection{Design aplikace}
+
+
+\paragraph{API endpointy}
+
+
+\subsubsection{Možnosti plánovače}
+
+\paragraph{Singlemodální s využitím sdílených prostředků}
+% 	- singlemodal bike
+% servisni zony
+% vraceni v docku
+
+\paragraph{Singlemodální s využitím hromadné dopravy}
+% \paragraph{}
+\paragraph{Multimodální s využitím hromadné dopravy a sdílených kol}
+
+% 
+% 	- singlemodal 
+% - multimodal
+% 	- simplifying the graph - transit hubs
+% 		- selecting the transit hubs
+% 			- naively from the list of stations
+% 			- i.e selecting stations from every metro line, bus line, tramline
+% 				- spatial search
+% 				- geospatial system+search (h3)
+% 				- further selection of stations
+% 			- TNR selects a subset T ⊂ V (normally 10 000 nodes) of so called transit nodes and stores distances between them in a ta- ble. Moreover, each node v ∈ V stores the distances to all relevant transit nodes, called access-nodes 
+% 			- Then, with good choice of T , a long-range query can be reduced to three table lookups. In order to decide whether a query is a long-range query, a locality filter is introduced. In case s and t are too close to each other, an arbitrary speed-up technique is applied. The percentage of global queries can be increased by introducing several layers of transit nodes. 
+% 			- 
+% 		- fetching times from backends
+% 		- connecting the legs
+% 		- finding the shortest via cost function
+% 	- recreating the route from respective legs
+
+\subsubsection{Získání dat}
+
+% - ziskani dat
+% - intro k ziskani dat, 
+% - letme popsani sbiraci sluzby, 
+% - ulozeni do redisu
+
+
+\subsubsection{Postup kontejnerizace aplikace}
+
+% best practices
+
+\subsubsection{Hardening kontejneru}
+
+
+\section{Nasazení plánovače}
+
+\subsection{Distribuovaná architektura}
+
+
+\subsubsection{Softwarově definovaná infrastruktura}
+
+S příchodem cloudu a virtualizace jako takové přišel i nespočet nových nástrojů a platforem, díky kterým začne vznikat portfolio systémů, o které se většinou musíme starat. V důsledku komplexnosti portfolia pomocných programů tedy i krok k více softwarově definované infrastruktuře. Softwarově definovaná architektura (většinou nazývaná jako Infrastructure as Code, zkráceně IaC) je pokus o využití maximálního potenciálu aktuální IT infrastruktury. Kief Morris \cite{kief-morris-iac} popisuje IaC následovně
+
+
+\begin{quotation}
+Infrastruktura jako kód je přístup k administraci IT infrastruktury v době cloudu, s využitím mikroslužeb, automatického nasazování a založeném na praktikách ze softwarového inženýrství.  
+\end{quotation}
+
+Pro replikovatelnost řešení této práce budeme používat právě IaC pro popis nasazované infrastruktury.
+
+\paragraph{Výhody IaC}
+
+Využití Softwarově definované architektury má několik hlávních výhod.
+
+\paragraph{Jednoduše a rychle reprodukovatelné systémy}
+
+S použitím IaC mohou administrátoři rychle nasadit a nastavit celou infrastrukturu spuštěním jednoho jednoduchého příkazu, či skriptu.
+
+IaC skripty popisují všechny nutné kroky pro vytvoření požadovaného systému, jako například velikost instance, nainstalovaný software dané verze, nastavení firewallu, atp.
+
+\paragraph{Jednorázové systémy}
+
+
+IaC přeměnila starý, statický přístup k systémům na dynamický, kde již neměníme staré instance daného zdroje, ale pro jednoduchost vytvoříme nový. Po té, co je jisté, že zdroj pracuje korektně, nahradí starou instanci. Díky tomu je jednodužší programy přesouvat z jednoho serveru na druhý bez velkých potíží. Toto pomáhá také s aktualizacemi potřebných knihoven či operačního systému. Takovýto způsob myšlení je nutný v případech, kdy potřebujeme dynamicky škálovat systémy a nemůžeme se spolehnout na hardware, na kterém aplikace běží.
+
+\paragraph{Konzistence konfigurace}
+
+
+
+Lidské chyby vždy způsobovaly problémy při konzistenci konfigurace, a to i v případech, kdy jsou následovány procesy a postupy. Manuální úpravy vytvoří menší či větší odchylky od původního zdrojového kódu, což zvyšuje pravděpodobnost složitosti a časové náročnosti při opravě softwarové chyby. 
+
+IaC plně standardizuje konfiguraci infrastruktury a díky tomu nenechává moc prostoru lidské chybě.
+
+
+
+\paragraph{Samodokumentující se systémy}
+
+Obvzáště v malých a pružných projektech se bojujeme s tím, aby dokumentace byla užitečná a přesně popisující daný problém. S tím, jak dokumentaci, či program upravujeme, tím více je pravděpodobnost nekonzistence dokumentace a problému vyšší. Další problém je to, že různí lidé mají různé způsoby psaní dokumentace a jejich vysvětlení nemusí být hned čtenáři zřejmé. I díky tomu většina dokumentací přesně nereprezentuje to, co daný problém znamená. IaC toto řeší tím, že definici a dokumentaci generuje přímo z kódu a právě kvůli tomu máme informace vždy aktuální. K tomu je třeba dopsat jen malé části dokumentace k dovysvětlení hůře pochopitelných částí.  
+
+
+\paragraph{Verzování všeho}
+
+S tím, jak máme definici infrastruktury v kódu, se nám otvírá možnost použít verzovací systém pro sledování změn, a případně vrácení se ke starší verze infrastruktury, v případě, že se objevily nějaké problémy.
+
+Verzovací systémy \footnote{VCS -- Version Control System} nám nabízí zobrazení změn, obsahující všechny implementované změny, důvod, a osobu, která změny vytvořila. Taková funkce přidává užitečnost v případě oprav kódu, protože se jednouduše můžeme obrátit na člověka, který danou část změnil. 
+
+\paragraph{Terraform}
+
+V našem případě využijeme k popisu infrastruktury program Terraform. Terraform je nástroj na automatizaci infrastruktury od společnosti HashiCorp a je napsán v jazyce Go. Hlavní výhodou Terraformu je, že je multiplatformní, tj. podporuje mnoho různých cílů \footnote{v Terraform terminologii zvané backendy}, mezi němi jsou  cloudoví poskytovatelé, jako AWS, GCP, Azure, ale i bare metal  možnosti nasazení, jako KVM (libvirt) \cite{tf-libvirt}.
+
+
+Terraform popisuje infrastrukturu pomocí konfiguračních souborů, jež jsou psány v jazyce HCL. Hashicorp Configuration Languag (HCL) je doménově specifický jazyk vyvinutý uvnitř firmy HashiCorp.
+
+\subsubsection{Návrh architektury}
+
+% Architektura systemu a designova rozhodnuti
+
+\begin{figure}[H]\centering
+	\includesvg[width=1.2\textwidth]{graphs/aws-diagram.drawio.svg}
+
+	\caption[Návrh architektury v AWS cloudu]{Návrh architektury v AWS cloudu}\label{fig:float}
+\end{figure}
+
+
+\subsubsection{Návrh kubernetes clusteru}
+
+\begin{figure}[H]\centering
+	\includesvg[width=1.3\textwidth]{graphs/kubernetes.drawio.svg}
+
+	\caption[Rozvržení podů a služeb v Kubernetes clusteru]{Rozvržení podů a služeb v Kubernetes clusteru}\label{fig:float}
+\end{figure}
+
+
+% Nasazeni kubernetes
+
+
+% Pridani secretu do k8s`
+
+% skalovatelnost
+
+%  skalovani podu
+% manualni
+% autoscaling
+
+\subsection{Automatizace infrastruktury}
+
+Pro zvýšení důvěry ve správnost a kvalitu softwaru, Fowler et al. \cite{microservices-article} doporučuje co nejvíce automatizovat opakované úkoly, jako například spouštění testů, vytváření kontejnerů, či nasazování. Dle jejich názoru by měl CD (continoous deployment) tvořit nasazení doslovně nudným. Také Newman \cite{microservices-book} nazývá virtualizaci jako klíčovým faktorem k automatizaci infrastruktury, a to proto, že napomáhají k aotumatickému vytvoření a škálování virtuálních strojů pro vývojové či produkční prostředí.
+
+
+
+\subsection{Vytvoření soukromého Docker registry}
+
+% ECR
+
+% Gitlab Registry
+
+
+\subsection{API brána}
+
+
+\begin{figure}[H]\centering
+	\includesvg[width=1.2\textwidth]{graphs/api-gateway.drawio.svg}
+
+	\caption[Diagram komunikace klienta se službou]{Diagram komunikace klienta se službou}\label{fig:float}
+\end{figure}
+
+
+
+% traefik 
+\subsection{Nastavení sítě}
+
+Diagram níže popisuje rozvržení sítě po plánovací aplikaci v cloudové platformě AWS. Základní oddělovací částí v AWS je VPC (Virtual Private Cloud)\cite{aws-vpc}, umožňující vytvoření logicky izolované části AWS cloudu do které se nasazují AWS zdroje dle nastavení virtuální sítě.
+
+\begin{figure}[H]\centering
+	\includesvg[width=1\textwidth]{graphs/vpc.drawio.svg}
+
+	\caption[Rozvržení subnetů využitých pro aplikaci v jednom AWS regionu]{Rozvržení subnetů využitých pro aplikaci v jednom AWS regionu}\label{fig:float}
+\end{figure}
+
+Pro plánovací aplikaci využíváme jednoho AWS regionu, který se obvykle skládá ze tří dostupnostních zón (AZ, Availability zones)\cite{aws-azs}. Každá dostupnostní zóna je jedno či více datacenter v jednom regionu, datacentra jsou navíc stavěna tak, aby každá z nich byla vystavěna jiným živelným rizikám. Tedy pro příklad, pokud je jedna dostupnostní zóna náchylná povodním, druhá AZ bude stavěna na kopci. Podobně to funguje s energetickým mixem či síťovým připojením. 
+
+
+Jak je zřejmé z diagramu, v našem případě vytváříme v každé AZ jeden soukromý a jeden veřejný subnet. Co subnety obsahují bude diskutováno v následujících kapitolách.
+
+\subsection{Zabezpečení Kubernetes clusteru}
+
+% Principle of Least Privilege
+% scanovani imagu
+% CIS Benchmark
+
+
+\section{Continuous integration \& continuous deployment}
+
+Podkapitolky níže popíšou koncepty Continuous integration, Continuous delivery (dohromady také zvané jako CI/CD), dále ukážou současnou nabídku takových služeb. Dále bude jedna ze služeb vybrána a její technologie bude diskutována.
+
+% TODO: teoreticky popis
+\subsection{Continuous integration}
+
+Cílem Continuous integrace (CI) \cite{fowler-ci}je propojení práce developera (jako například kompilace aplikace, sestavení kontejneru, spuštění testů) a kódu aplikace. Tato integrace by se měla dít s vyšší frekvencí, např. nekolikrát denně, či po každém commitu do repozitáře s kódem.
+
+Částí CI procesu může být i kontrola kódu (code review) od kolegů developerů.
+
+Výstupem CI procesu je připravená verze aplikace (např. tedy binární soubor nebo kontejner), který se nazývá artefakt (artifact).
+
+
+Častá integrace a kvalitní testové pokrytí pomáhá s důvěrou v kód na straně jak developerů, tak i na straně serverových administrátorů. 
+
+\subsection{Continuous delivery}
+
+Continuous delivery (CD) je v podstatě automatizace nasazení aplikací a řadí se za Continuous integration. CD tedy popisuje možností nasazení artefaktů z CI do různých aplikačních prostředí, jako je např. produkce.\cite{humble-ci}
+
+Každý tým má různé potřeby při stavění takových CD. Někde je třeba více testovacích (develop) prostředí, jiné týmy vyžadují mnoho staging (prostředí identické produkčnímu ale bez reálné zátěže) prostředí. Při CD vytvoření takového prostředí může být plně automatizováno, případně se může jednat o několik (potvrzujících) kliknutí.
+
+% Gitlab CI
+% Jenkins
+% Circle CI
+
+\subsection{Návrh CI/CD pro plánovací službu}
+
+Diagram níže ukazuje CI/CD proces pro plánovací službu z této práce.
+
+
+
+\begin{figure}[H]\centering
+	\includesvg[width=1\textwidth]{graphs/CICD.drawio.svg}
+
+	\caption[Diagram v CI pipeline]{Diagram v CI pipeline}\label{fig:float}
+\end{figure}
+
+Kód aplikace je uložen v git repozitáři na serveru GitHub. Po zapsání změn do repozitáře se spustí Unit Testový krok a pokud proběhne úspěšně, z aplikace se začne vytvářet kontejner. V případě, že změny jsou v master, staging, či develop branchi, tak obraz je pushnut do kontejner repozitáře (ECR). CD proces poté čeká na vstup od uživatele, který svým schválením může aplikaci nasadit do respektivních prostředí.
+
+
+\section{Nasazení aplikace}
+
+Kapitola níže popisuje praktické nasazení aplikace do distribuovaného prostředí Kubernetes. Ukáže, které Kubernetes zdroje jsou potřebné a jak je možné proces automatizovat s nástrojem Helm. 
+
+
+\subsection{Helm}
+
+
+
+Standardním způsobem definování zdrojů v Kubernetes clusteru je vytvoření konfiguračního souboru pro každý zdroj. V případě, kdy spouštíme aplikaci s různým nastavením (jako produkční a testovací prostředí, atp.), bychom museli jednotlivé konfigurační soubory duplikovat. Tím míříme k redundantnímu kódu, kterému se chceme vyhnout (pokud dodržujeme DRY \footnote{DRY -- Do not repeat yourself} pravidlo).
+
+K nasazení je využito nástroje Helm \cite{helm-docs}.
+
+Helm pomáhá s vytvořením dynamických konfiguračních souborů s použitím proměnných. Helm používá Go Template Engine, kterým generuje Kubernetes zdroje s využitím předem definovaných proměnných. Právě kvůli tomu můžeme vytvořit pouze jeden resource template (šablonu Kubernetes zdroje), ze kterého se vygenerují lehce odlišné zdroje pro každé prostředí. 
+
+Využijeme Helmu verze 3, který všechny změny vypočítává na klientské části (na počítači u vývojáře), což je změna oproti verzi druhé, kde bylo třeba nasazovat Tiller (server část Helmu v2) do Kubernetes.
+
+\subsection{Kubernetes objekty}
+
+
+Jak bylo zmíněno v teoretické části práce, Kubernetes byl navrhnut jako desired state model a ten je možno definovat několika typy předpisů, mezi které patří například YAML a JSON. My využijeme YAML formátu. Tento předpis bude verzovaný a generovaný pomocí Helmu zmíněného výše. Desired state konfigurace by se dala také nazvat jako spustitelná dokumentace, ze které můžeme kdykoliv obnovit nastavení Kubernetes objektů. 
+
+Aplikace obsahuje tyto Kubernetes objekty:
+
+\paragraph{Deployment}
+\paragraph{Service}
+\paragraph{Ingress}
+\paragraph{IngressRoute}
+\paragraph{ServiceMonitor}
+% \paragraph{ServiceMonitor}
+
+
+\chapter{Možná vylepšení do budoucnosti}
+Kapitola níže popisuje možná vylepšení a je rozdělena na vylepšení na aplikaci a na vylepšení na infrastruktuře.
+
+\section{Vylepšení na plánovací aplikaci}
+
+\subsection{Návrh nejkratších cest s ohledem na dopravní zácpy}
+
+
+% - Možná vylepšení do budoucnosti
+%     - vylepseni na routingu
+%         - návrh nejkratších cest s ohledem na dopravní zácpy 
+%             - pouziti traffic dat
+%         - návrh cest dle jiných cenových funkcí (tedy místo nejkratší to “nejpříjemnější” - okolo zelených parků, případně málo vytížených ulic, atp) 
+%             - upravy cenove funkce
+%         - použití nových algoritmů pro navigaci
+%         - zrychlovani
+%     - vylepseni na architekture
+
+
+\section{Vylepšení na architektuře}
+
+
+
+\subsection{Service mesh}
+
+
+\subsection{OIDC}
+
+
+
+% \chapter{Realizace}
 
 \begin{conclusion}
 	%sem napište závěr Vaší práce
 \end{conclusion}
 
 \bibliographystyle{csn690}
+
 \bibliography{mybibliographyfile}
+
+\begin{thebibliography}{9}
+
+	% \bibitem{rfc}
+	% RFC 951 -- Bootstrap Protocol. Online, Duben 2017. Dostupné z~\url{https://tools.ietf.org/html/rfc951}.
+	
+	% \bibitem{ansible-modules}
+
+	% ŠAMALÍK, Adam. Extension of OpenStack Modules for Ansible Platform. Brno, 2016. Bachelor’s thesis. Brno University of Technology, Faculty of Information Technology. Supervisor Hruška Martin.
+
+\bibitem{zaklady-teorie-grafu}
+
+Základy Teorie Grafů pro (nejen) informatiky, Doc. RNDr. Petr Hliněný, Ph.D., Fakulta Informatiky Masarykova Univerzita, 2010
+
+\bibitem{multimodal-route-planning}
+
+Multi-Modal Route Planning, Thomas Pajor, Institut fur Theoretische Informatik, Universitat Karlsruhe (TH), Germany, 2009
+
+\bibitem{route-planning-in-transportation-networks}
+Route Planning in Transportation Networks, HANNAH BAST, DANIEL DELLING, ANDREW V. GOLDBERG, MATTHIAS MÜLLER-HANNEMANN, THOMAS PAJOR, PETER SANDERS, DOROTHEA WAGNER, RENATO F. WERNECK, Microsoft Research, 2014
+
+\bibitem{modelling-of-preferences-in-multimodal-routing-algorithms}
+
+Modelling of preferences in multimodal routing algorithms, Santtu Saijets, Master’s Thesis, Aalto University, 2018
+
+\bibitem{time-dependent-networks-as-models-to-achieve-fast-exact-time-table-queries}
+
+Gerth Stølting Brodal and Riko Jacob. Time-dependent networks as models to achieve fast exact time-table queries. Electronic Notes in Theoretical Computer Science, 92:3–15, 2004.
+
+
+\bibitem{virt-comparison}
+
+M. J. Scheepers, “Virtualization and containerization of application infrastructure: A comparison,” in 21st Twente Student Conference on IT, vol. 1,
+pp. 1–7, 2014.
+
+\bibitem{monitoring-smart-cities}
+
+S. Muralidharan, G. Song, and H. Ko, “Monitoring and managing iot applications in smart cities using kubernetes,” CLOUD COMPUTING 2019,
+p. 11, 2019.
+
+\bibitem{k8s-avail-manager}
+
+L. A. Vayghan, M. A. Saied, M. Toeroe, and F. Khendek, “Kubernetes as an availability manager for microservice applications,” 1901.04946, 2019.
+
+\bibitem{microservice-devops}
+
+A. Balalaie, A. Heydarnoori, and P. Jamshidi, “Microservices architecture enables devops: Migration to a cloud-native architecture,” Ieee Software, vol. 33, no. 3, pp. 42–52, 2016.
+
+
+\bibitem{microservice-docker}
+
+] D. Jaramillo, D. V. Nguyen, and R. Smart, “Leveraging microservices architecture by using docker technology,” in SoutheastCon 2016, pp. 1–5, IEEE,
+2016.
+
+\bibitem{docker-reproducible}
+
+C. Boettiger, “An introduction to docker for reproducible research,” ACM
+SIGOPS Operating Systems Review, vol. 49, no. 1, pp. 71–79, 2015.
+
+\bibitem{cloud-native-experience}
+
+	A. Balalaie, A. Heydarnoori, and P. Jamshidi, “Migrating to cloud-native
+architectures using microservices: an experience report,” in European Conference on Service-Oriented and Cloud Computing, pp. 201–215, Springer,
+2015.
+\bibitem{ha-k8s}
+
+
+
+Elastisys, “Setting up highly available kubernetes clusters.”
+https://elastisys.com/wp-content/uploads/2018/
+01/kubernetes-ha-setup.pdf. [Online
+
+
+\bibitem{priv-container}
+
+	Jesse Hertz. Abusing privileged and unprivileged linux containers. Whitepaper,
+	NCC Group, 2016.
+
+\bibitem{hardening-container}
+
+	Aaron Grattafiori. Understanding and hardening linux containers. Whitepaper,
+NCC Group, 2016.
+
+\bibitem{microservices-article}
+
+Martin Fowler and James Lewis. Microservices. https://martinfowler.com/
+articles/microservices.html, 2014. Accessed: 29.08.2017
+
+\bibitem{microservices-book}
+
+Sam Newman. Building microservices: designing fine-grained systems. ” O’Reilly
+Media, Inc.”, 2015.
+
+\bibitem{docker-saigon}
+
+Docker Saigon. Docker internals. http://docker-saigon.github.io/post/
+Docker-Internals/, 2016. Accessed: 23.07.2017., 
+
+\bibitem{as-k8s-san-kho-lin}
+
+
+San Kho Lin, Auto-scaling an optimisation algorithm using Docker and Kubernetes on the NeCTAR Research Cloud, UNIVERSITY OF MELBOURNE, 2018
+
+
+\bibitem{aws-vpc}
+
+
+\url{https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html
+}
+
+\bibitem{aws-azs}
+
+\url{https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-availability-zones
+}
+
+\bibitem{fowler-ci}
+
+Fowler, Martin. Continuous Integration. martinFowler.com. [online], May 1,
+2006 [cit. April 2, 2020]. Available from https://martinfowler.com/articles/
+continuousIntegration.html.
+
+\bibitem{humble-ci}
+
+Humble, Jez. Continuous Delivery - Priciples. continuousdelivery.com. [online],
+2017 [cit. April 2, 2020]. Available from https://continuousdelivery.com/
+principles/
+\bibitem{helm-docs}
+
+https://helm.sh/docs/
+
+
+\bibitem{kief-morris-iac}
+
+Infrastructure as Code: Managing Servers in the Cloud
+Přední strana obálky
+Kief Morris
+O'Reilly Media, 2016 - Počet stran: 336
+
+\bibitem{tf-libvirt}
+
+https://github.com/dmacvicar/terraform-provider-libvirt
+
+\bibitem{gtfs-spec}
+
+Google Developers. GTFS Static Overview | Static Transit | Google Developers. [Online; accessed 6-February-2017]. 2020.
+
+\bibitem{otp-api-spec}
+
+http://dev.opentripplanner.org/apidoc/1.0.0/index.html
+
+\end{thebibliography}
+
 
 \appendix
 
@@ -109,6 +1010,9 @@ Druhou částí je navržení nasazení aplikace do distribuovaného systému Ku
 	\item[GUI] Graphical user interface
 	\item[XML] Extensible markup language
 \end{description}
+
+
+
 
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
@@ -233,5 +1137,7 @@ Druhou částí je navržení nasazení aplikace do distribuovaného systému Ku
 		.2 thesis.ps\DTcomment{text práce ve formátu PS}.
 	}
 \end{figure}
+
+
 
 \end{document}
