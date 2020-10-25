@@ -234,6 +234,12 @@ Jízdní řád může být modelován dvěmi základními přístupy, a to jako 
 
 
 \subsection{Algoritmy k hledání nejkratší cesty}
+\subsubsection{Hledání cest v silničních sítích
+
+\paragraph{Dijskra}
+\paragraph{A star}
+\paragraph{Contraction Hierarchies}
+\subsubsection{Hledání cest v sítích s městskou hromadnou dopravou}
 
 
 
@@ -501,12 +507,34 @@ Nakonec jsem vybral právě EKS díky největším znalostem právě s AWS platf
 \subsection{Výběr již vytvořených plánovačů s otevřeným kódem}
 % - duvody pro propojeni vice jiz vytvorenych backendu
 % - narocnost na vyvoj vlastniho backendu z akademickych algoritmu (velmi mnoho features)
-% - preporocessing steps
-% - uprava gtfs dat
+
+\subsubsection{Open Source Routing Machine}
 % - vytvoreni grafu z vlozenych dat (Contractions, ohodniceni hran pomoc vyskoveho rasteru do kopce/z kopce, ..)
-% - Comparison of Open Source routing services with OpenStreetMap Data for blind pedestrians 
+
 % - OSRM
 % - upravy
+
+\subsubsection{Open Trip Planner}
+% - preporocessing steps
+
+
+V základě Open Trip Planner nenabízí API endpoint pro vytvoření časové matice\cite{otp-api-spec}. Proto musel být tento endpoint do aplikace doprogramován.
+
+\paragraph{GTFS Data}
+
+Rosšířeným formátem obsahující jízdní řády hromadné dopravy je General Transit Feed Specification (GTFS)\cite{gtfs-spec}. GTFS má v sobě zakódován relevantní informace, jako například geografické lokace, přes které linka projíždí, časy příjezdů a odjezdů ze stanic, či informace o stanicích. Dopravci mohou publikovat své jízdní řády jako GTFS soubory, které mohou vývojáři a aplikace dále využívat.
+
+Pro poskytnutí aktualizovaných informací, jako zpožděné odjezdy či příjezdy mohou být GTFS data dále rozšířena pomocí GTFS Realtime extension. S využitím GTFS Realtime extension mohou být oznámeny události jako výluky či nehody na tratích. V této práci se budeme zabývat pouze GTFS daty bez rozšíření.
+
+Díky integraci OTP s GTFS daty je právě této služby využíváno k plánování tras pomocí městské hromadné dopravy.
+
+
+% - GTFS data
+% 	- ziskani, potrebne upravy
+% 	- gtfs checkers that validate invalid entries, fix them and pass further
+
+% - uprava gtfs dat
+% - Comparison of Open Source routing services with OpenStreetMap Data for blind pedestrians 
 % - OTP
 % - upravy
 % - algo - A*, CH on non transit parts
@@ -515,23 +543,31 @@ Nakonec jsem vybral právě EKS díky největším znalostem právě s AWS platf
 % - https://blog.conveyal.com/opentripplanner-nearing-a-decade-of-progress-on-multimodal-routing-bc668432d3fe
 % - This is a list of articles, dissertations, and books that have inspired and informed both the existing OTP routing engine and some ongoing experiments. Currently, OpenTripPlanner uses a single time-dependent (as opposed to time-expanded) graph that contains both street and transit networks. Walk-only and bicycle-only trips are generally planned using the A* algorithm with a Euclidean heuristic or contraction hierarchies. Walk+Transit or Bike+Transit trips are planned using a variant of the MOA* algorithm with epsilon-dominance for path pruning and the Tung-Chew heuristic (a graph providing a lower bound on aggregate weight) for queue ordering.
 % - 
-% - GTFS data
-% 	- ziskani, potrebne upravy
-% 	- gtfs checkers that validate invalid entries, fix them and pass further
 
 
 \subsection{Návrh plánovací služby}
 
-
 % - popis multimodal routing služby, její API endpointy, komunikace s ostatními službami (databáze, sdílená cache obsahující lokace dopravních prostředků, podpůrné služby pro navigaci - OTP pro MHD, OSRM pro singlemodální plánování cest, ..)
-% - zpusob wrappovani nad osrm a otp popsane vyse
-% - singlemodal routing
-% 	- approaches to singlemodal
-% verejna doprava
-% 
+
+
+\subsubsection{Design aplikace}
+
+
+\paragraph{API endpointy}
+
+
+\subsubsection{Možnosti plánovače}
+
+\paragraph{Singlemodální s využitím sdílených prostředků}
 % 	- singlemodal bike
 % servisni zony
 % vraceni v docku
+
+\paragraph{Singlemodální s využitím hromadné dopravy}
+% \paragraph{}
+\paragraph{Multimodální s využitím hromadné dopravy a sdílených kol}
+
+% 
 % 	- singlemodal 
 % - multimodal
 % 	- simplifying the graph - transit hubs
@@ -759,6 +795,20 @@ Helm pomáhá s vytvořením dynamických konfiguračních souborů s použitím
 
 Využijeme Helmu verze 3, který všechny změny vypočítává na klientské části (na počítači u vývojáře), což je změna oproti verzi druhé, kde bylo třeba nasazovat Tiller (server část Helmu v2) do Kubernetes.
 
+\subsection{Kubernetes objekty}
+
+
+Jak bylo zmíněno v teoretické části práce, Kubernetes byl navrhnut jako desired state model a ten je možno definovat několika typy předpisů, mezi které patří například YAML a JSON. My využijeme YAML formátu. Tento předpis bude verzovaný a generovaný pomocí Helmu zmíněného výše. Desired state konfigurace by se dala také nazvat jako spustitelná dokumentace, ze které můžeme kdykoliv obnovit nastavení Kubernetes objektů. 
+
+Aplikace obsahuje tyto Kubernetes objekty:
+
+\paragraph{Deployment}
+\paragraph{Service}
+\paragraph{Ingress}
+\paragraph{IngressRoute}
+\paragraph{ServiceMonitor}
+% \paragraph{ServiceMonitor}
+
 
 \chapter{Možná vylepšení do budoucnosti}
 Kapitola níže popisuje možná vylepšení a je rozdělena na vylepšení na aplikaci a na vylepšení na infrastruktuře.
@@ -941,8 +991,15 @@ O'Reilly Media, 2016 - Počet stran: 336
 
 https://github.com/dmacvicar/terraform-provider-libvirt
 
-\end{thebibliography}
+\bibitem{gtfs-spec}
 
+Google Developers. GTFS Static Overview | Static Transit | Google Developers. [Online; accessed 6-February-2017]. 2020.
+
+\bibitem{otp-api-spec}
+
+http://dev.opentripplanner.org/apidoc/1.0.0/index.html
+
+\end{thebibliography}
 
 
 \appendix
