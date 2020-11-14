@@ -21,6 +21,20 @@
 \usepackage{svg}
 \usepackage{float}
 \usepackage{hyperref}
+\usepackage{listings}
+
+
+% Define code word command
+\usepackage{xparse}
+
+\NewDocumentCommand{\codeword}{v}{%
+\texttt{\textcolor{black}{#1}}%
+}
+
+\lstset{language=C,keywordstyle={\bfseries \color{blue}}}
+
+% \usepackage{minted}
+% \usemintedstyle{vs}
 
 
 
@@ -241,9 +255,37 @@ Jízdní řád může být modelován dvěmi základními přístupy, a to jako 
 \paragraph{Contraction Hierarchies}
 \subsubsection{Hledání cest v sítích s městskou hromadnou dopravou}
 
-\subsection{HexSpace graf}
+\subsection{HexSpace indexovací systém} \label{HexSpace indexovací systém}
+
+Gridové systémy (Grid systems) jsou integrálně důležité nástoje pro analýzu velkých datasetů prostorových dat a rozdělení oblastí planety do identifikovatelných buněk dle mřížky. Akademický termín pro takový nástroj je diskrétní globální síťový systém (discrete global grid system) \cite{discrete-global-grid}. Je to tedy diskrétní systém, který rozděluje svět na diskrétní buňky -- ke každé pozici na světě je přidružen identifikátor buňky.
 
 
+Grid systém H3 je známým nástrojem v této oblasti, byl navržen společností Uber, která nástroj využívá pro plánování taxi jízd. Společnost Uber tento nástroj veřejně vydala jako open source projekt a je široce používán. V odstavcích níže popíši tento nástroj a moji konkrétní implementaci.
+
+
+\paragraph{H3}
+
+Jednoduše řečeno, mřížka v H3 je šestihranný objekt (hexagon) a který lze znovu rozdělit na menší mřížky. Hexagonní systém je vhodnější pro modelování a prostorové transformace, protože sousední objekty jsou v tomto systému stejně vzdáleni (na rozdíl od tvarů jako jsou trojúhelníky nebo čtverce). 
+
+H3 také obsahuje řadu analytických nástrojů, jako například funkce pro převod souřadnic a geoprostorové indexování.
+
+
+
+% https://www.gislounge.com/h3-open-source-geospatial-indexing-system/
+
+
+\paragraph{Konkrétní implementace v plánovací aplikaci}
+
+V mojí konkrétní implementaci budu takovýto indexovací systém reprezentovat 2 hlavními objekty. Těmi jsou 
+
+\begin{enumerate}
+
+	\item Hexagon objekt, který obsahuje informace, jako své hexagon\_id, geolokaci bodu uprostřed hexagonu, které vozidla obsahuje a rozlišení (velikost) hexagonu.
+
+	\item HexSpace objekt, který je wrapper nad H3 knihovnou a obsahuje všechny hexagony.
+
+
+\end{enumerate}
 \subsection{Multimodální plánování cest}
 
 % teorie jak je to aktualne reseno v napr. OTP
@@ -288,7 +330,19 @@ Následující část práce popíše aktuální řešení multimodálního plá
 
 
 
-\paragraph{Způsob využití OTP}
+\paragraph{Způsob využití OSRM}
+
+Z OSRM jsou využity dvě hlavní funkce, API endpoint pro plánování cest z bodu A do bodu B a endpoint pro hledání časových matic.
+
+
+
+
+\begin{itemize}
+	\item Základní službou, která je v v OSRM využita, je služba pro hledání cest \cite{osrm-route-api}.  Služba nalezne nejrychlejší cestu mezi body zadanými vstupními parametry. Je možné zvolit různé nepovinné parametry, jako přidání nalezených alternativních cest, případně verbosita informací o plánované cestě.
+
+	\item OSRM již nabízí nabízí službu pro hledání časových matic \cite{osrm-table-api}. Vstupem jsou seznamy počátečních a konečných bodů (ve formátu GPS souřadnic). Výstupem služby je matice nejkratších časů, během kterých je možné uskutečnít cestu mezi všemi páry počátečních a konečných bodů. \label{osrm-time-matrix}
+
+\end{itemize}
 
 
 \subsubsection{Open Trip Planner}
@@ -299,7 +353,7 @@ V roce 2020 byla vydána verze 2.0, která je ve fázi RC (Release Candidate). K
 
 
 
-TODO: write what it time matrix
+% TODO: write what it time matrix
 
 \paragraph{GTFS Data}
 
@@ -322,7 +376,7 @@ Díky integraci OTP s GTFS daty je právě této služby využíváno k plánov�
 + routing endpoint
 
 
-V základě Open Trip Planner nenabízí API endpoint pro vytvoření časové matice\cite{otp-api-spec}. Proto musel být tento endpoint do aplikace doprogramován.
+V základě Open Trip Planner nenabízí API endpoint pro vytvoření časové matice\cite{otp-api-spec}. Proto musel být tento endpoint do aplikace doprogramován. Endpoint je koncipuován stejně, jako v OSRM službě, popsaný v \ref{osrm-time-matrix}.
 
 
 % - GTFS data
@@ -375,14 +429,14 @@ TODO write intro + endpointy pro bike, scooters, carshare, etc
 		\item výběr města (toto je z důvodu, že mapový podklad je omezen vždy na jedno město hlavně kvůli šetření paměti),
 		\item výběr společností sdílené mobility. Pokud parametr není zadán, jsou automaticky vybrány všechny možné služby pro daný typ mobility a pro dané město.
 	\end{itemize}
-	\item konkurentně vedle sebe vytvoříme 2 různé procesy, jeden pro plánování cest s dockovanými prostředky (se stanicemi, ze kterých lze sdílený prostředek vyzvednout a do kterého lze vrátit), druhý pro nedockované prostředky. V každém z procesů budeme hledat základy cest (stěžejní etapy celé trasy), které obsahují daný sdílený prostředek. Pro dockované vozidla sdílených mobilit
+	\item konkurentně vedle sebe vytvoříme 2 různé procesy, jeden pro plánování cest s dockovanými prostředky (se stanicemi, ze kterých lze sdílený prostředek vyzvednout a do kterého lze vrátit a pro prostředky, které je možné vrátit pouze ve vyznačených zónách), druhý pro nedockované prostředky. V každém z procesů budeme hledat základy cest (stěžejní etapy celé trasy), které obsahují daný sdílený prostředek. Pro dockované vozidla sdílených mobilit
 	\begin{itemize}
-		\item vybereme všechna vozidla v okruhu od počátečního bodu, kde poloměr je dán konfigurací aplikace,
-		\item Vytvoříme HexSpace graf,
-		\item do HexSpace grafu vložíme 2 hrany -- počáteční a konečný bod cesty,
-		\item z vybraných vozidel vytvoříme hexagony, které později využijeme,
+		\item vybereme všechna sdílená vozidla v okruhu od počátečního bodu, kde poloměr okruhu je dán konfigurací aplikace,
+		\item Vytvoříme HexSpace graf\footnote{HexSpace je definován v předchozí kapitole \ref{HexSpace indexovací systém}.},
+		\item do HexSpace grafu vložíme 2 hrany -- počáteční a konečný bod cesty a pro ně vytvoříme Hexagon objekt,
+		% \item z vybraných vozidel vytvoříme hexagony, které později využijeme,
 		% \item do HexSpace grafu vložíme vybraná vozidla jako hrany,
-		\item z docků vytvoříme hexagony, které později využijeme,
+		\item z docků a krajních míst servisních zón vytvoříme hrany v HexSpace \footnote{ Výběr relevantních docků je popsán v \ref{vyber-docku}  a výběr bodů ze servisních zón je popsán v \ref{vyber-zon}.} (pokud již neexistuje Hexagon, tak ho vytvoříme), 
 		% \item do HexSpace grafu vložíme informace o tom, které hexagony jsou zóny pro vrácení prostředků a které nejsou,
 		\item asynchronně spočítáme váhy jednotlivých etap tras. Pomocí OSRM backendu spočítáme 
 		\begin{itemize}
@@ -426,6 +480,32 @@ TODO write intro + endpointy pro bike, scooters, carshare, etc
 	\item K základům cest konkurentně spočítáme pěší etapy trasy. 
 
 \end{enumerate}
+
+
+\paragraph{Výběr bodů ze servisních zón}\label{vyber-zon}
+
+K manipulaci s prostorovými daty je k výběru nejbližšího bodu v sesrvisní zóně využito knihovny shapely \cite{shapely}. V tomto případě máme nějaký konkrétní bod (buď  cílový bod u singlemodálních cest, nebo cílový krok etapy u multimodálních cest) a nějaký polygon, značící servisní zónu, kam sdílený prostředek můžeme vrátit.
+
+\begin{figure}[H]\centering
+	% \includegraphics[width=0.5\textwidth, angle=30]{cvut-logo-bw}
+	\includegraphics[width=1\textwidth]{graphs/service-zone-selection.jpg}
+
+	\caption[Servisní zóna a bod mimo zónu]{Servisní zóna a bod mimo zónu}\label{fig:service-zone}
+	% \label{fig:service-zone}
+
+\end{figure}
+
+Diagram \ref{fig:service-zone} zobrazuje tyto dva objekty. K nalezení nejbližšího bodu v servisní zóně je využito funkce \codeword{nearest_points(geom1, geom2)}, kde \codeword{geom1} a \codeword{geom2} jsou nějaké geometrické objekty.
+
+\paragraph{Výběr relevantních docků}\label{vyber-docku}
+
+Někteří poskytovatelé sdílené mobility vyžadují, aby jejich vozidla byla vracena ve stojanech. Následující odstavec popisuje, jak relevantní stojany vybrat. Výběr stojanů je poměrně jednoduchý, tedy v okruhu (s předem daným poloměrem) od předem daného bodu zájmu (například cílový bod cesty).
+
+Použitý algoritmus je naivní, tedy, že cyklem procházíme přes všechny stojany, a pro každý stojan spočítáme vzdálenost od bodu zájmu dle Harvesinova vzorce. Pokud je vzdálenost menší, než předem daný poloměr, stojan vybereme pro pozdější výpočty.
+
+Pomocí Harvesinova vzorce\cite{harvesine} je možné spočítat vzdálenost dvou bodů jako vzdálenost dvou bodů po kulové ploše. Harvesinova metoda obsahuje nepřesnost, protože bere jako model kouli (skutečný tvar Země se od tvaru koule mírně liší, což ale na kratších vzdálenostech, jako cesty po městě, je zanedbatelný problém). 
+
+
 
 
 \paragraph{Singlemodální s využitím hromadné dopravy}
@@ -520,6 +600,9 @@ FIRST MILE
 	% 	\item jinak zkuste použít šablonu pro kódování \mbox{ISO-8859-2}.
 	% \end{itemize}
 \end{enumerate}
+
+TODO write similarly for last mile
+
 
 
 TODO write intro
@@ -789,6 +872,14 @@ GKE (Google Kubernetes Engine)\cite{gke} je služba nabízená na GCP (Google Cl
 
 		% vysoka integrace ktery vypada nativne (google)
 
+
+\begin{figure}[H]\centering
+	\includesvg[inkscapelatex=false,width=1\textwidth]{graphs/gke-cluster-architecture.svg}
+
+	\caption[Architektura GKE clusteru]{Architektura GKE clusteru}\label{fig:float}
+\end{figure}
+		
+		
 
 \paragraph{EKS}
 
@@ -1257,6 +1348,44 @@ https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture
 
 \bibitem{eks}
 https://docs.aws.amazon.com/eks/latest/userguide/clusters.html
+
+
+\bibitem{h3}
+
+https://eng.uber.com/h3/
+
+
+\bibitem{discrete-global-grid}
+
+Geodesic Discrete Global Grid Systems
+Kevin Sahr, Denis White, and A. Jon Kimerling
+http://webpages.sou.edu/~sahrk/sqspc/pubs/gdggs03.pdf
+
+\bibitem{shapely}
+
+https://shapely.readthedocs.io/en/stable/manual.html
+
+
+\bibitem{shapely-nearest-points}
+
+
+\url{https://shapely.readthedocs.io/en/stable/manual.html#shapely.ops.nearest_points}
+
+\bibitem{harvesine}
+
+MĚŘENÍ VZDÁLENOSTÍ A PLOCHY POMOCÍ GPS, DIPLOMOVÁ PRÁCE,  Bc. JAKUB KONECKÝ, 2009
+
+
+\bibitem{osrm-table-api}
+
+\url{http://project-osrm.org/docs/v5.5.1/api/#table-service}
+
+\bibitem{osrm-route-api}
+
+\url{http://project-osrm.org/docs/v5.5.1/api/#route-service}
+
+
+
 
 \end{thebibliography}
 
