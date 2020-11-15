@@ -440,30 +440,30 @@ TODO write intro + endpointy pro bike, scooters, carshare, etc
 		% \item do HexSpace grafu vložíme informace o tom, které hexagony jsou zóny pro vrácení prostředků a které nejsou,
 		\item asynchronně spočítáme váhy jednotlivých etap tras. Pomocí OSRM backendu spočítáme 
 		\begin{itemize}
-			\item Time matrix z počátečního bodu do bodů s vozidly pomocí chůze (one to many),
+			\item Time matrix\footnote{Endpoint s časovou maticí je popsán v \ref{osrm-time-matrix}} z počátečního bodu do bodů s vozidly pomocí chůze (one to many),
 			\item Time matrix z bodů s vozidly do bodů s docky (many to many),
 			\item Time matrix z bodů s docky do konečného bodu (many to one).
 		\end{itemize}
 		
-		\item V HexSpace grafu přidáme uzly pro každé vybrané sdílené vozidlo, plus hranu z hranu z počátečního uzlu do uzlu s vozidlem (s přidělenou váhou a módem chůze)
-		\item V HexSpace grafu přidáme uzly pro stanice vozidel, plus hrany 
+		\item V HexSpace grafu přidáme uzly pro každé vybrané sdílené vozidlo, plus hranu z hranu z počátečního uzlu do uzlů s vozidly (s přidělenou váhou vytvořenou pomocí OSRM v bodu výše; a módem chůze),
+		\item V HexSpace grafu přidáme uzly pro vybrané stanice vozidel (případně mezní body zón), plus hrany 
 		\begin{itemize}
-			\item z uzlu vozidla do uzlu docku (s přidělenou váhou a módem daného prostředku)
-			\item z uzlu docku do konečného uzlu (s přidělenou váhou a módem chůze)
+			\item z uzlu vozidla do uzlu stanice (resp. mezního bodu zóny), s přidělenou váhou a módem daného prostředku,
+			\item z uzlu docku (resp. mezního bodu zóny) do konečného uzlu, s přidělenou váhou a módem chůze,
 		\end{itemize}
 
-		\item pomocí dijskry nalezneme základy tras nad HexSpace grafem,
+		\item pomocí Dijskry \footnote{Dijskrův algoritmus je obecně definován kapitole \ref{dijskra}, spolu s konkrétní implementací.} nalezneme základy tras nad HexSpace grafem,
 		% \begin{itemize}
 		% 	\item 
 		% 	\item 
 		% \end{itemize}
 
-		\item optimalizujeme lokaci prostředku
+		\item optimalizujeme výběr prostředku tak, že pro každou etapu cesty, která je plánována sdíleným prostředkem
 		\begin{itemize}
-			\item TODO
+			\item vybereme hexagon počátečního bodu a v něm nalezneme nebližší prostředek daného typu a poskytovatele k počátečnímu budou. Díky tomu minimalizujeme vzdálenost chůze
 		\end{itemize}
 
-		\item vrátíme nejlepší základy tras,
+		\item vrátíme nejlepší základy tras (základem trasy nazývám takovou trasu, která ještě neobsahuje detailní informace o cestě),
 	\end{itemize}
 	Pro nedockované vozidla sdílených mobilit
 	\begin{itemize}
@@ -477,7 +477,11 @@ TODO write intro + endpointy pro bike, scooters, carshare, etc
 		\item Plány tras jsou seřazeny (dle doby cesty) a pro každou společnost je vybrána nejrychlejší trasa, která je poté vrácena.
 	
 	\end{itemize}
-	\item K základům cest konkurentně spočítáme pěší etapy trasy. 
+	\item K základům tras konkurentně spočítáme detaily všech etap trasy tak, že
+		\begin{itemize}
+			\item pro etapy, kde způsob dopravy je sdílený dopravní prostředek nebo chůze, využijeme OSRM backendu,
+			\item pro etapy, kde způsob dopravy je veřejná doprava, využijeme OTP backendu,
+		\end{itemize}
 
 \end{enumerate}
 
