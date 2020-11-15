@@ -440,7 +440,7 @@ TODO write intro + endpointy pro bike, scooters, carshare, etc
 		% \item do HexSpace grafu vložíme informace o tom, které hexagony jsou zóny pro vrácení prostředků a které nejsou,
 		\item asynchronně spočítáme váhy jednotlivých etap tras. Pomocí OSRM backendu spočítáme 
 		\begin{itemize}
-			\item Time matrix\footnote{Endpoint s časovou maticí je popsán v \ref{osrm-time-matrix}} z počátečního bodu do bodů s vozidly pomocí chůze (one to many),
+			\item Time matrix\footnote{Endpoint OSRM s časovou maticí je popsán v \ref{osrm-time-matrix}} z počátečního bodu do bodů s vozidly pomocí chůze (one to many),
 			\item Time matrix z bodů s vozidly do bodů s docky (many to many),
 			\item Time matrix z bodů s docky do konečného bodu (many to one).
 		\end{itemize}
@@ -480,8 +480,10 @@ TODO write intro + endpointy pro bike, scooters, carshare, etc
 	\item K základům tras konkurentně spočítáme detaily všech etap trasy tak, že
 		\begin{itemize}
 			\item pro etapy, kde způsob dopravy je sdílený dopravní prostředek nebo chůze, využijeme OSRM backendu,
-			\item pro etapy, kde způsob dopravy je veřejná doprava, využijeme OTP backendu,
+			\item pro etapy, kde způsob dopravy je veřejná doprava, využijeme OTP backendu.
 		\end{itemize}
+	\item Vrátíme nejrychlejší cestu pro každou sdílenou mobilitu.
+
 
 \end{enumerate}
 
@@ -553,7 +555,7 @@ Plán cesty s hromadnou dopravou se zkládá z těchto kroků:
 \paragraph{Multimodální s využitím hromadné dopravy a sdílených kol}
 
 
-Plán cesty s hromadnou dopravou a (kolo, koloběžka, skutr, atd) se zkládá z těchto kroků:
+Plán cesty s hromadnou dopravou a (kolo, koloběžka, skutr, atd) se skládá z těchto kroků:
 
 FIRST MILE
 
@@ -564,11 +566,11 @@ FIRST MILE
 		\item výběr města (toto je z důvodu, že mapový podklad je omezen vždy na jedno město hlavně kvůli šetření paměti),
 		\item výběr společností sdílené mobility. Pokud parametr není zadán, jsou automaticky vybrány všechny možné služby pro daný typ mobility a pro dané město.
 	\end{itemize}
-	\item vybereme transitní stanice v okolí počátečního bodu
-	\begin{itemize}
-		\item TODO for first mile problem
-	\end{itemize}
-	\item vybereme vozidla v okolí počátečního bodu
+	\item vybereme tranzitní stanice v okolí počátečního bodu \footnote{Výběr přestupních stanic je detailněji popsán v kapitole \ref{vyber-tranzitnich-stanic}.},
+	% \begin{itemize}
+	% 	\item TODO. Transit
+	% \end{itemize}
+	\item vybereme vozidla v okolí počátečního bodu\footnote{Vozidla v okolí bodu jsou vybírána pomocí Harvesinova vzorce, který je popsán v kapitole  \ref{vyber-docku}.},
 	\item vytvoříme HexSpace graf,
 	\item vytvoříme HexSpace z
 	\begin{itemize}
@@ -580,22 +582,24 @@ FIRST MILE
 		\item vozidel okolo počátečního bodu,
 		\item stanic okolo počátečního bodu,
 	\end{itemize}
-	\item pomocí dijskry nalezneme základy tras nad HexSpace grafem,
+	\item pomocí Dijskry \footnote{Dijskrův algoritmus je obecně definován kapitole \ref{dijskra}, spolu s konkrétní implementací.} nalezneme základy tras nad HexSpace grafem,
 	% \begin{itemize}
 	% 	\item 
 	% 	\item 
 	% \end{itemize}
 
-	\item optimalizujeme lokaci prostředku
+	\item optimalizujeme výběr prostředku tak, že pro každou etapu cesty, která je plánována sdíleným prostředkem
 	\begin{itemize}
-		\item TODO
+		\item vybereme hexagon počátečního bodu a v něm nalezneme nebližší prostředek daného typu a poskytovatele k počátečnímu budou. Díky tomu minimalizujeme vzdálenost chůze.
 	\end{itemize}
-	\item dopočítáme zbytky cest
+	\item Vrátíme nejlepší základy tras (základem trasy nazývám takovou trasu, která ještě neobsahuje detailní informace o cestě),
+	\item K základům tras konkurentně spočítáme detaily všech etap trasy tak, že
 	\begin{itemize}
-		\item TODO
+		\item pro etapy, kde způsob dopravy je sdílený dopravní prostředek nebo chůze, využijeme OSRM backendu,
+		\item pro etapy, kde způsob dopravy je veřejná doprava, využijeme OTP backendu.
 	\end{itemize}
-	\item vybereme cesty, které jsou multimodální
-	\item vrátíme vybrané cesty
+	\item Vybereme a vrátíme nejrychlejší cestu.
+
 
 
 
@@ -610,6 +614,17 @@ TODO write similarly for last mile
 
 
 TODO write intro
+
+
+\paragraph{Výběr tranzitních stanic} \label{vyber-tranzitnich-stanic}
+
+Multimodální cesty jsou realizovány pomocí takzvaných tranzitních (přestupních) stanic. Jako tranzitní stanici můžeme považovat takovou stanici, která je v určité vzdálenosti od bodu zájmu (tato vzdálenost je dána konfigurací). 
+
+V současné době jsou přestupní stanice hledány naivně, tedy cyklem procházíme přes všechny stanice a pro každou stanici spočítáme vzdálenost od bodu zájmu pomocí Harvesinova vzorce\cite{harvesine}. \footnote{Harvesinův vzorec je detailněji popsán v kapitole \ref{vyber-docku}.}
+	\begin{itemize}
+		\item V případě, že předpoklad platí, stanice je vybrána do dalšího kroku.
+	\end{itemize}
+
 
 % 
 % 	- singlemodal 
@@ -741,17 +756,12 @@ Control Groups (or cgroups) jsou využívány na vynucení limitů na hardware z
 
 Pravidla jsou organizována ve stromové struktuře, jsou děděny a volitelně vrstvena (nestable).
 
-Cgroups mohou být vnímány jako vylepšení nad ulimity/rlimity. Nastavují se pomocí speciálního virtuálního souboru připojeném v cestě /sys/fs/cgroup a mohou být kdykoliv měněny.
+Cgroups mohou být vnímány jako vylepšení nad ulimity/rlimity. Nastavují se pomocí speciálního virtuálního souboru připojeném v cestě \codeword{/sys/fs/cgroup} a mohou být kdykoliv měněny.
 
 Mezi hlavní skupiny cgroup patří CPU, memory, BLKIO, devices, network nebo freezer. V případě, že jsou špatně nastaveny, tak taková chyba může být využita k útěku z kontejneru ven. 
 
-[The main cgroup subsystems are CPU, memory, BLKIO,
-devices, network and freezer. If configured wrong, this can also be a security issue, since
-it can be used for a container escape [36]. In context of container technology, most of
-cgroups management is abstracted away, with the exception of LXC [33].
 
-
- Právě Docker virtualizaci se se bude věnovat další podkapitola.
+Právě Docker virtualizaci se se bude věnovat další podkapitola.
 
 \subsection{Docker}
 
@@ -1107,6 +1117,21 @@ Aplikace obsahuje tyto Kubernetes objekty:
 \paragraph{IngressRoute}
 \paragraph{ServiceMonitor}
 % \paragraph{ServiceMonitor}
+
+\section{Škálování aplikace}
+
+% Popis jak skalovat
+
+\subsection{Bezstavová aplikace}
+
+% Popis ze aplikace je bezstavova, tj. neni treba zadna komunikace mezi jednotlivymi replikami
+
+\subsection{Horizontální škálování}
+\subsubsection{Horizontální škálování uzlů clusteru}
+\subsubsection{Horizontální škálování podů}
+
+\subsection{Vertikální škálování}
+
 
 
 \chapter{Možná vylepšení do budoucnosti}
