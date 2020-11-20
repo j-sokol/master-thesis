@@ -433,7 +433,7 @@ TODO write intro + endpointy pro bike, scooters, carshare, etc
 	\begin{itemize}
 		\item vybereme všechna sdílená vozidla v okruhu od počátečního bodu, kde poloměr okruhu je dán konfigurací aplikace,
 		\item Vytvoříme HexSpace graf\footnote{HexSpace je definován v předchozí kapitole \ref{HexSpace indexovací systém}.},
-		\item do HexSpace grafu vložíme 2 hrany -- počáteční a konečný bod cesty a pro ně vytvoříme Hexagon objekt,
+		\item do HexSpace grafu vložíme 2 uzly -- počáteční a konečný bod cesty a pro ně vytvoříme Hexagon objekt,
 		% \item z vybraných vozidel vytvoříme hexagony, které později využijeme,
 		% \item do HexSpace grafu vložíme vybraná vozidla jako hrany,
 		\item z docků a krajních míst servisních zón vytvoříme hrany v HexSpace \footnote{ Výběr relevantních docků je popsán v \ref{vyber-docku}  a výběr bodů ze servisních zón je popsán v \ref{vyber-zon}.} (pokud již neexistuje Hexagon, tak ho vytvoříme), 
@@ -448,7 +448,7 @@ TODO write intro + endpointy pro bike, scooters, carshare, etc
 		\item V HexSpace grafu přidáme uzly pro každé vybrané sdílené vozidlo, plus hranu z hranu z počátečního uzlu do uzlů s vozidly (s přidělenou váhou vytvořenou pomocí OSRM v bodu výše; a módem chůze),
 		\item V HexSpace grafu přidáme uzly pro vybrané stanice vozidel (případně mezní body zón), plus hrany 
 		\begin{itemize}
-			\item z uzlu vozidla do uzlu stanice (resp. mezního bodu zóny), s přidělenou váhou a módem daného prostředku,
+			\item z uzlu vozidla do uzlu stanice (resp. mezního bodu zóny), s přidělenou váhou a módem daného sdíleného prostředku,
 			\item z uzlu docku (resp. mezního bodu zóny) do konečného uzlu, s přidělenou váhou a módem chůze,
 		\end{itemize}
 
@@ -566,23 +566,42 @@ FIRST MILE
 		\item výběr města (toto je z důvodu, že mapový podklad je omezen vždy na jedno město hlavně kvůli šetření paměti),
 		\item výběr společností sdílené mobility. Pokud parametr není zadán, jsou automaticky vybrány všechny možné služby pro daný typ mobility a pro dané město.
 	\end{itemize}
-	\item vybereme tranzitní stanice v okolí počátečního bodu \footnote{Výběr přestupních stanic je detailněji popsán v kapitole \ref{vyber-tranzitnich-stanic}.},
+	% \item vybereme tranzitní stanice v okolí počátečního bodu \footnote{Výběr přestupních stanic je detailněji popsán v kapitole \ref{vyber-tranzitnich-stanic}.},
 	% \begin{itemize}
 	% 	\item TODO. Transit
 	% \end{itemize}
-	\item vybereme vozidla v okolí počátečního bodu\footnote{Vozidla v okolí bodu jsou vybírána pomocí Harvesinova vzorce, který je popsán v kapitole  \ref{vyber-docku}.},
-	\item vytvoříme HexSpace graf,
-	\item vytvoříme HexSpace z
+	\item vytvoříme HexSpace graf \footnote{HexSpace je definován v předchozí kapitole \ref{HexSpace indexovací systém}.},
+	\item do HexSpace grafu vložíme 2 uzly -- počáteční a konečný bod cesty a pro ně vytvoříme Hexagon objekt,
+	\item vybereme vozidla v okolí počátečního bodu\footnote{Vozidla v okolí bodu jsou vybírána pomocí Harvesinova vzorce, který je popsán v kapitole \ref{vyber-docku}.} a přidáme je jako uzly do HexSpace grafu,
+	\item vybereme přestupní stanice v okolí počátečního bodu\footnote{Výběr přestupních stanic je popsán v kapitole \ref{vyber-tranzitnich-stanic}.} a přidáme je jako uzly do HexSpace grafu, 
+	\item asynchronně spočítáme váhy jednotlivých etap tras. Pomocí OSRM a OTP backendů spočítáme 
 	\begin{itemize}
-		\item vozidel okolo počátečního bodu,
-		\item stanic okolo počátečního bodu,
+		\item Time matrix\footnote{Endpoint OSRM s časovou maticí je popsán v \ref{osrm-time-matrix}} z počátečního bodu do bodů s vozidly pomocí chůze (one to many),
+		\item Time matrix z bodů s vozidly do bodů s přestupními stanicemi (many to many),
+		\item Time matrix\footnote{Endpoint OTP s časovou maticí je popsán v \ref{otp-time-matrix}} z přestupních stanic do konečného bodu (many to one).
+
+		% \item Time matrix z bodů s docky do konečného bodu (many to one).
 	\end{itemize}
-	\item vytvoříme intermodální graf
+
+	\item Do HexSpace grafu přidáme
+
 	\begin{itemize}
-		\item vozidel okolo počátečního bodu,
-		\item stanic okolo počátečního bodu,
+		\item hrany z počátečního uzlu do uzlů se sdílenými vozidly vybranými v předchozím kroku (s přidělenou váhou vytvořenou pomocí OSRM v bodu výše; a módem chůze),
+		\item hrany z uzlů se sdílenými vozidly do uzlů s přestupními stanicemi s přidělenou váhou a módem daného sdíleného prostředku,
+		\item hrany z uzlů se přestupními stanicemi do do konečného uzlu, s přidělenou váhou a módem hromadné dopravy,
 	\end{itemize}
-	\item pomocí Dijskry \footnote{Dijskrův algoritmus je obecně definován kapitole \ref{dijskra}, spolu s konkrétní implementací.} nalezneme základy tras nad HexSpace grafem,
+
+	% \item vytvoříme HexSpace z
+	% \begin{itemize}
+	% 	\item vozidel okolo počátečního bodu,
+	% 	\item stanic okolo počátečního bodu,
+	% \end{itemize}
+	% \item vytvoříme intermodální graf
+	% \begin{itemize}
+	% 	\item vozidel okolo počátečního bodu,
+	% 	\item stanic okolo počátečního bodu,
+	% \end{itemize}
+	\item pomocí Dijskrova algoritmu \footnote{Dijskrův algoritmus je obecně definován kapitole \ref{dijskra}, spolu s konkrétní implementací.} nalezneme základy tras nad HexSpace grafem,
 	% \begin{itemize}
 	% 	\item 
 	% 	\item 
@@ -590,7 +609,7 @@ FIRST MILE
 
 	\item optimalizujeme výběr prostředku tak, že pro každou etapu cesty, která je plánována sdíleným prostředkem
 	\begin{itemize}
-		\item vybereme hexagon počátečního bodu a v něm nalezneme nebližší prostředek daného typu a poskytovatele k počátečnímu budou. Díky tomu minimalizujeme vzdálenost chůze.
+		\item vybereme hexagon počátečního bodu a v něm nalezneme nebližší prostředek daného typu a poskytovatele k počátečnímu bodu. Díky tomu minimalizujeme vzdálenost chůze.
 	\end{itemize}
 	\item Vrátíme nejlepší základy tras (základem trasy nazývám takovou trasu, která ještě neobsahuje detailní informace o cestě),
 	\item K základům tras konkurentně spočítáme detaily všech etap trasy tak, že
@@ -786,9 +805,6 @@ Docker se zkládá z těchto funkcí:
 
 Docker Engine je jádro Docker ekosystému, založený na client-server architektuře, která má 3 hlavní komponenty -- Docker démon, REST API poskytované Docker démonem a CLI klient (příkaz docker).
 
-
-
-
 \paragraph{Docker Daemon}
 
 Docker démon běží na stroji (jako root \footnote{Root je privilegovaný uživatel na Unix-like operačních systémech}) a je zodpovědný za poslouchání na REST API, odkud zpracovává požadavky od Docker klientů. Spravuje také Docker objekty pro kontejnery, obrazy instancí, sítě, diskové objekty.
@@ -840,8 +856,6 @@ s motivací:
 \begin{itemize}  
 \item  Co nejvíce zabstraktnit HW stroj a operační systém od aplikace a nasazení 
 \item  razí pravidlo jedoho procesu na jeden kontejner. Díky tomu pokud řídíme a ovládáme proces, řídíme i aplikaci. Proto posouvá Kubernetes API z infrastrukturně orientovaného na aplikačne orientovaný a zlepšuje vhled (observability) na aplikace a jejich nasazení
-
-
 \end{itemize}
 
 
