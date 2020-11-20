@@ -21,6 +21,20 @@
 \usepackage{svg}
 \usepackage{float}
 \usepackage{hyperref}
+\usepackage{listings}
+
+
+% Define code word command
+\usepackage{xparse}
+
+\NewDocumentCommand{\codeword}{v}{%
+\texttt{\textcolor{black}{#1}}%
+}
+
+\lstset{language=C,keywordstyle={\bfseries \color{blue}}}
+
+% \usepackage{minted}
+% \usemintedstyle{vs}
 
 
 
@@ -116,7 +130,7 @@ První částí je plánovač cest ve městech. Výstupem navrhovaného plánova
 
 Druhou částí je navržení nasazení aplikace do distribuovaného systému Kubernetes. Bude diskutováno, proč Kubernetes byl vybrán a jeho součásti budou popsány. V nasazení má být brán důraz na několik faktorů. Jedním z ním je bezpečnost aplikace běžící v otevřeném internetu. Tedy je důležité mít komunikaci s aplikací řešenou šifrovaně. Práce bude popisovat autentizaci a autorizaci přístupů do jednotlivých částí API rozhraní aplikace. Důležitá je též vysoká dostupnost aplikace, budou tedy popsány mechanismy vysoké dostupnosti v distribuovaném systému, a to i při opakovaném nasazování. Budou diskutovány způsoby nasazení, mezi ně patřící Blue/Green deployment, Carnary releases, Rolling updates atp. Nasazování bude řešeno automatizovaně, spolu s porovnáním poskytovatelů CD (automatizovaných deploymentů/nasazení).
 
-\chapter{Teoretická část}
+\chapter{Multimodální plánovač}
 \section{Základy teorie grafů}
 
 Pro pochopení problému hledání cest je prvně třeba definovat jednotlivé stavební bloky. Práce tedy v kapitole níže popíše relevantní definice z teorie grafů.
@@ -234,19 +248,445 @@ Jízdní řád může být modelován dvěmi základními přístupy, a to jako 
 
 
 \subsection{Algoritmy k hledání nejkratší cesty}
-\subsubsection{Hledání cest v silničních sítích
+\subsubsection{Hledání cest v silničních sítích}
 
 \paragraph{Dijskra}
 \paragraph{A star}
 \paragraph{Contraction Hierarchies}
 \subsubsection{Hledání cest v sítích s městskou hromadnou dopravou}
 
+\subsection{HexSpace indexovací systém} \label{HexSpace indexovací systém}
+
+Gridové systémy (Grid systems) jsou integrálně důležité nástoje pro analýzu velkých datasetů prostorových dat a rozdělení oblastí planety do identifikovatelných buněk dle mřížky. Akademický termín pro takový nástroj je diskrétní globální síťový systém (discrete global grid system) \cite{discrete-global-grid}. Je to tedy diskrétní systém, který rozděluje svět na diskrétní buňky -- ke každé pozici na světě je přidružen identifikátor buňky.
 
 
+Grid systém H3 je známým nástrojem v této oblasti, byl navržen společností Uber, která nástroj využívá pro plánování taxi jízd. Společnost Uber tento nástroj veřejně vydala jako open source projekt a je široce používán. V odstavcích níže popíši tento nástroj a moji konkrétní implementaci.
+
+
+\paragraph{H3}
+
+Jednoduše řečeno, mřížka v H3 je šestihranný objekt (hexagon) a který lze znovu rozdělit na menší mřížky. Hexagonní systém je vhodnější pro modelování a prostorové transformace, protože sousední objekty jsou v tomto systému stejně vzdáleni (na rozdíl od tvarů jako jsou trojúhelníky nebo čtverce). 
+
+H3 také obsahuje řadu analytických nástrojů, jako například funkce pro převod souřadnic a geoprostorové indexování.
+
+
+
+% https://www.gislounge.com/h3-open-source-geospatial-indexing-system/
+
+
+\paragraph{Konkrétní implementace v plánovací aplikaci}
+
+V mojí konkrétní implementaci budu takovýto indexovací systém reprezentovat 2 hlavními objekty. Těmi jsou 
+
+\begin{enumerate}
+
+	\item Hexagon objekt, který obsahuje informace, jako své hexagon\_id, geolokaci bodu uprostřed hexagonu, které vozidla obsahuje a rozlišení (velikost) hexagonu.
+
+	\item HexSpace objekt, který je wrapper nad H3 knihovnou a obsahuje všechny hexagony.
+
+
+\end{enumerate}
 \subsection{Multimodální plánování cest}
 
+% teorie jak je to aktualne reseno v napr. OTP
 
-\section{Nasazení aplikace}
+
+
+
+
+\section{Návrh plánovače}
+
+Následující část práce popíše aktuální řešení multimodálního plánování, co již jsou na trhu a jaké funkce splňují. Dále prozkoume open source plánovače Open Trip Planner a Open Source Routing Machine, které budou využity k plánovači v této práci. Následovně bude popsán návrh multimodálního plánovače a jeho kontejnerizace.
+
+\subsection{Aktuální řešení na trhu}
+
+%  Google multimodal 
+
+
+% multimodal from FEL
+
+
+% Finnish one
+
+
+% UK one
+
+
+% OTP
+
+
+\subsection{Výběr již vytvořených plánovačů s otevřeným kódem}
+% - duvody pro propojeni vice jiz vytvorenych backendu
+% - narocnost na vyvoj vlastniho backendu z akademickych algoritmu (velmi mnoho features)
+
+\subsubsection{Open Source Routing Machine}
+% - vytvoreni grafu z vlozenych dat (Contractions, ohodniceni hran pomoc vyskoveho rasteru do kopce/z kopce, ..)
+
+% - OSRM
+% - upravy
+
+
+\paragraph{Mapový podklad}
+
+
+
+\paragraph{Způsob využití OSRM}
+
+Z OSRM jsou využity dvě hlavní funkce, API endpoint pro plánování cest z bodu A do bodu B a endpoint pro hledání časových matic.
+
+
+
+
+\begin{itemize}
+	\item Základní službou, která je v v OSRM využita, je služba pro hledání cest \cite{osrm-route-api}.  Služba nalezne nejrychlejší cestu mezi body zadanými vstupními parametry. Je možné zvolit různé nepovinné parametry, jako přidání nalezených alternativních cest, případně verbosita informací o plánované cestě.
+
+	\item OSRM již nabízí nabízí službu pro hledání časových matic \cite{osrm-table-api}. Vstupem jsou seznamy počátečních a konečných bodů (ve formátu GPS souřadnic). Výstupem služby je matice nejkratších časů, během kterých je možné uskutečnít cestu mezi všemi páry počátečních a konečných bodů. \label{osrm-time-matrix}
+
+\end{itemize}
+
+
+\subsubsection{Open Trip Planner}
+% - preporocessing steps
+OpenTripPlanner (OTP)\cite{otp-site} je multimodální plánovač cest, který se dle oficiální dokumentace zaměřuje na cesty s využitím hromadné dopravy v kombinaci s jízdou na kole, chůzí, či mobility službami jako sdílení kol. Serverová část OTP je schopna běžet na jakékoli platformě, na které běží Java virtual machine (tedy Linux, Mac nebo Windows). OTP nabízí REST a GraphQL API, ke kterým projekt nabízí i různé frontendy. Staví svoji reprezentaci dopravní sítě na otevřených datech v otevřených formátech, jako jsou GTFS a podklady map OpenStreetMap. Nabízí upozornění a změny tras v reálném čase dle výluk na dopravní síti.
+
+V roce 2020 byla vydána verze 2.0, která je ve fázi RC (Release Candidate). Kvůli dlouhodobějšímu vývoji plánovače z této práce je využito starší verze OTP, tj. verze 1.3. OpenTripPlanner je vydán pod licencí LGPL \cite{lgpl}, tedy dílo pod LGPL lze linkovat (v případě knihovny užívat) programem, která nemá licenci (L)GPL, a který může být jak svobodný software, tak software proprietární.\cite{lgpl-stallman}
+
+
+
+% TODO: write what it time matrix
+
+\paragraph{GTFS Data}
+
+Využívaným formátem obsahující jízdní řády městské hromadné dopravy je General Transit Feed Specification (GTFS)\cite{gtfs-spec}. GTFS má v sobě zakódován relevantní informace jízdních řádů, jako například geografické lokace míst, přes která linka projíždí, časy příjezdů a odjezdů ze stanic, či informace o stanicích. Dopravci mohou publikovat své jízdní řády jako GTFS soubory, které mohou vývojáři a aplikace dále využívat. Například město Praha nabízí tato data veřejně dostupně na svých stránkách opendata.praha.eu \cite{gtfs-prague}. 
+
+Pro poskytnutí aktualizovaných informací, jako zpožděné odjezdy či příjezdy mohou být GTFS data dále rozšířena pomocí GTFS Realtime extension. S využitím GTFS Realtime extension mohou být oznámeny události jako výluky či nehody na tratích. V této práci se budeme zabývat pouze GTFS daty bez rozšíření.
+
+Díky integraci OTP s GTFS daty je právě této služby využíváno k plánování tras pomocí městské hromadné dopravy.
+
+
+
+
+\paragraph{Mapový podklad}
+
+
+
+\paragraph{Způsob využití OTP}
+
+
++ routing endpoint
+
+
+V základě Open Trip Planner nenabízí API endpoint pro vytvoření časové matice\cite{otp-api-spec}. Proto musel být tento endpoint do aplikace doprogramován. Endpoint je koncipuován stejně, jako v OSRM službě, popsaný v \ref{osrm-time-matrix}.
+
+
+% - GTFS data
+% 	- ziskani, potrebne upravy
+% 	- gtfs checkers that validate invalid entries, fix them and pass further
+
+% - uprava gtfs dat
+% - Comparison of Open Source routing services with OpenStreetMap Data for blind pedestrians 
+% - OTP
+% - upravy
+% - algo - A*, CH on non transit parts
+% - raptor not yet, in v2
+% - https://wiki.openstreetmap.org/wiki/OpenTripPlanner#Routing 
+% - https://blog.conveyal.com/opentripplanner-nearing-a-decade-of-progress-on-multimodal-routing-bc668432d3fe
+% - This is a list of articles, dissertations, and books that have inspired and informed both the existing OTP routing engine and some ongoing experiments. Currently, OpenTripPlanner uses a single time-dependent (as opposed to time-expanded) graph that contains both street and transit networks. Walk-only and bicycle-only trips are generally planned using the A* algorithm with a Euclidean heuristic or contraction hierarchies. Walk+Transit or Bike+Transit trips are planned using a variant of the MOA* algorithm with epsilon-dominance for path pruning and the Tung-Chew heuristic (a graph providing a lower bound on aggregate weight) for queue ordering.
+% - 
+
+
+\subsection{Návrh plánovací služby}
+
+% - popis multimodal routing služby, její API endpointy, komunikace s ostatními službami (databáze, sdílená cache obsahující lokace dopravních prostředků, podpůrné služby pro navigaci - OTP pro MHD, OSRM pro singlemodální plánování cest, ..)
+
+
+\subsubsection{Design aplikace}
+
+
+\paragraph{API endpointy}
+
+
+
+
+
+\subsubsection{Možnosti plánovače}
+
+\paragraph{Singlemodální s využitím sdílených prostředků}
+% 	- singlemodal bike
+% servisni zony
+% vraceni v docku
+
+Pro plánování cest s hromadnou dopravou je využito aplikace Open Source Routing Machine zmíněného výše.
+
+TODO write intro + endpointy pro bike, scooters, carshare, etc
+
+
+
+\begin{enumerate}
+	\item Z požadavku od klienta převezmeme potřebné parametry. Mezi teto parametry patří
+	\begin{itemize}
+		\item zeměpisné délky a šířky počátečního a konečného bodu,
+		\item výběr města (toto je z důvodu, že mapový podklad je omezen vždy na jedno město hlavně kvůli šetření paměti),
+		\item výběr společností sdílené mobility. Pokud parametr není zadán, jsou automaticky vybrány všechny možné služby pro daný typ mobility a pro dané město.
+	\end{itemize}
+	\item konkurentně vedle sebe vytvoříme 2 různé procesy, jeden pro plánování cest s dockovanými prostředky (se stanicemi, ze kterých lze sdílený prostředek vyzvednout a do kterého lze vrátit a pro prostředky, které je možné vrátit pouze ve vyznačených zónách), druhý pro nedockované prostředky. V každém z procesů budeme hledat základy cest (stěžejní etapy celé trasy), které obsahují daný sdílený prostředek. Pro dockované vozidla sdílených mobilit
+	\begin{itemize}
+		\item vybereme všechna sdílená vozidla v okruhu od počátečního bodu, kde poloměr okruhu je dán konfigurací aplikace,
+		\item Vytvoříme HexSpace graf\footnote{HexSpace je definován v předchozí kapitole \ref{HexSpace indexovací systém}.},
+		\item do HexSpace grafu vložíme 2 uzly -- počáteční a konečný bod cesty a pro ně vytvoříme Hexagon objekt,
+		% \item z vybraných vozidel vytvoříme hexagony, které později využijeme,
+		% \item do HexSpace grafu vložíme vybraná vozidla jako hrany,
+		\item z docků a krajních míst servisních zón vytvoříme hrany v HexSpace \footnote{ Výběr relevantních docků je popsán v \ref{vyber-docku}  a výběr bodů ze servisních zón je popsán v \ref{vyber-zon}.} (pokud již neexistuje Hexagon, tak ho vytvoříme), 
+		% \item do HexSpace grafu vložíme informace o tom, které hexagony jsou zóny pro vrácení prostředků a které nejsou,
+		\item asynchronně spočítáme váhy jednotlivých etap tras. Pomocí OSRM backendu spočítáme 
+		\begin{itemize}
+			\item Time matrix\footnote{Endpoint OSRM s časovou maticí je popsán v \ref{osrm-time-matrix}} z počátečního bodu do bodů s vozidly pomocí chůze (one to many),
+			\item Time matrix z bodů s vozidly do bodů s docky (many to many),
+			\item Time matrix z bodů s docky do konečného bodu (many to one).
+		\end{itemize}
+		
+		\item V HexSpace grafu přidáme uzly pro každé vybrané sdílené vozidlo, plus hranu z hranu z počátečního uzlu do uzlů s vozidly (s přidělenou váhou vytvořenou pomocí OSRM v bodu výše; a módem chůze),
+		\item V HexSpace grafu přidáme uzly pro vybrané stanice vozidel (případně mezní body zón), plus hrany 
+		\begin{itemize}
+			\item z uzlu vozidla do uzlu stanice (resp. mezního bodu zóny), s přidělenou váhou a módem daného sdíleného prostředku,
+			\item z uzlu docku (resp. mezního bodu zóny) do konečného uzlu, s přidělenou váhou a módem chůze,
+		\end{itemize}
+
+		\item pomocí Dijskry \footnote{Dijskrův algoritmus je obecně definován kapitole \ref{dijskra}, spolu s konkrétní implementací.} nalezneme základy tras nad HexSpace grafem,
+		% \begin{itemize}
+		% 	\item 
+		% 	\item 
+		% \end{itemize}
+
+		\item optimalizujeme výběr prostředku tak, že pro každou etapu cesty, která je plánována sdíleným prostředkem
+		\begin{itemize}
+			\item vybereme hexagon počátečního bodu a v něm nalezneme nebližší prostředek daného typu a poskytovatele k počátečnímu budou. Díky tomu minimalizujeme vzdálenost chůze
+		\end{itemize}
+
+		\item vrátíme nejlepší základy tras (základem trasy nazývám takovou trasu, která ještě neobsahuje detailní informace o cestě),
+	\end{itemize}
+	Pro nedockované vozidla sdílených mobilit
+	\begin{itemize}
+		\item vybereme všechna vozidla v okruhu od počátečního bodu, kde poloměr je dán konfigurací aplikace,
+		\item pro všechna vybraná vozidla se pokusíme nalézt 2 cesty:
+		\begin{itemize}
+			\item cestu chůzí z počátečního bodu ke sdíleným vozidlům (tzv. one to many popsaný v kapitolách výše),
+			\item cestu na vozidle z aktuálního místa vozidla do cílového bodu cesty.
+		\end{itemize}
+		Tyto dvě etapy celkové cesty spojíme do sebe a vypočítáme celkovou délku, dobu a cenu trasy. Cena je vypočítána dle zálkadního tarifu dané služby mobilit.
+		\item Plány tras jsou seřazeny (dle doby cesty) a pro každou společnost je vybrána nejrychlejší trasa, která je poté vrácena.
+	
+	\end{itemize}
+	\item K základům tras konkurentně spočítáme detaily všech etap trasy tak, že
+		\begin{itemize}
+			\item pro etapy, kde způsob dopravy je sdílený dopravní prostředek nebo chůze, využijeme OSRM backendu,
+			\item pro etapy, kde způsob dopravy je veřejná doprava, využijeme OTP backendu.
+		\end{itemize}
+	\item Vrátíme nejrychlejší cestu pro každou sdílenou mobilitu.
+
+
+\end{enumerate}
+
+
+\paragraph{Výběr bodů ze servisních zón}\label{vyber-zon}
+
+K manipulaci s prostorovými daty je k výběru nejbližšího bodu v sesrvisní zóně využito knihovny shapely \cite{shapely}. V tomto případě máme nějaký konkrétní bod (buď  cílový bod u singlemodálních cest, nebo cílový krok etapy u multimodálních cest) a nějaký polygon, značící servisní zónu, kam sdílený prostředek můžeme vrátit.
+
+\begin{figure}[H]\centering
+	% \includegraphics[width=0.5\textwidth, angle=30]{cvut-logo-bw}
+	\includegraphics[width=1\textwidth]{graphs/service-zone-selection.jpg}
+
+	\caption[Servisní zóna a bod mimo zónu]{Servisní zóna a bod mimo zónu}\label{fig:service-zone}
+	% \label{fig:service-zone}
+
+\end{figure}
+
+Diagram \ref{fig:service-zone} zobrazuje tyto dva objekty. K nalezení nejbližšího bodu v servisní zóně je využito funkce \codeword{nearest_points(geom1, geom2)}, kde \codeword{geom1} a \codeword{geom2} jsou nějaké geometrické objekty.
+
+\paragraph{Výběr relevantních docků}\label{vyber-docku}
+
+Někteří poskytovatelé sdílené mobility vyžadují, aby jejich vozidla byla vracena ve stojanech. Následující odstavec popisuje, jak relevantní stojany vybrat. Výběr stojanů je poměrně jednoduchý, tedy v okruhu (s předem daným poloměrem) od předem daného bodu zájmu (například cílový bod cesty).
+
+Použitý algoritmus je naivní, tedy, že cyklem procházíme přes všechny stojany, a pro každý stojan spočítáme vzdálenost od bodu zájmu dle Harvesinova vzorce. Pokud je vzdálenost menší, než předem daný poloměr, stojan vybereme pro pozdější výpočty.
+
+Pomocí Harvesinova vzorce\cite{harvesine} je možné spočítat vzdálenost dvou bodů jako vzdálenost dvou bodů po kulové ploše. Harvesinova metoda obsahuje nepřesnost, protože bere jako model kouli (skutečný tvar Země se od tvaru koule mírně liší, což ale na kratších vzdálenostech, jako cesty po městě, je zanedbatelný problém). 
+
+
+
+
+\paragraph{Singlemodální s využitím hromadné dopravy}
+
+Pro plánování cest s hromadnou dopravou je využito aplikace OpenTripPlanner zmíněného výše. Plánování cest tímto způsobem je poměrně přímočaré. Je třeba mít dostupný OTP backend, ideálně nasazený ve stejném clusteru jako plánovací aplikace.
+
+
+Plán cesty s hromadnou dopravou se zkládá z těchto kroků:
+
+
+
+\begin{enumerate}
+	\item Z požadavku od klienta převezmeme potřebné parametry. Mezi teto parametry patří
+	\begin{itemize}
+		\item zeměpisné délky a šířky počátečního a konečného bodu,
+		\item výběr města (toto je z důvodu, že mapový podklad je omezen vždy na jedno město hlavně kvůli šetření paměti),
+		\item výběr módů dopravy (mezi ně patří tramvaj, autobus, chůze, lanovka, atp.),
+		\item a další dodatečné parametry k vyhledání nejvhodnější cesty. Mezi tyto dodatečné parametry patří maximální délka chůze, maximální počet přestupů a  minimální čas přestupu.
+	\end{itemize}
+   
+
+	\item Z požadavku od klienta vytvoříme požadavek pro OpenTripPlanner. K požadavku přidáme dodatečné parametry z předchozího kroku, které OTP podporuje. Požadavek poté odešleme na OpenTripPlanner aplikaci. 
+	\item Z aplikace OpenTripPlanner získáme seznam cest, pokud nějaké existují. 
+	\item Jednotlivé cesty dekódujeme a ke každé si ukládáme celkový čas cesty, a to jak k celé trase, tak i k jejím etapám (částím). 
+	\item Podíváme se, zda je danou část (etapu) cesty možné cestovat více různými prostředky. Pokud ano, přidáme alternativní prostředek jako proměnnou k etapě cesty.
+	\item Vybereme $n$ nejlepších cest dle kritéria (nejkratšího času).
+	% \begin{itemize}
+	% 	\item v~případě Windows použijte šablonu pro kódování \mbox{Windows-1250},
+	% 	\item jinak zkuste použít šablonu pro kódování \mbox{ISO-8859-2}.
+	% \end{itemize}
+\end{enumerate}
+
+
+
+
+% V Případě
+
+
+
+% \paragraph{}
+\paragraph{Multimodální s využitím hromadné dopravy a sdílených kol}
+
+
+Plán cesty s hromadnou dopravou a (kolo, koloběžka, skutr, atd) se skládá z těchto kroků:
+
+FIRST MILE
+
+\begin{enumerate}
+	\item Z požadavku od klienta převezmeme potřebné parametry. Mezi teto parametry patří
+	\begin{itemize}
+		\item zeměpisné délky a šířky počátečního a konečného bodu,
+		\item výběr města (toto je z důvodu, že mapový podklad je omezen vždy na jedno město hlavně kvůli šetření paměti),
+		\item výběr společností sdílené mobility. Pokud parametr není zadán, jsou automaticky vybrány všechny možné služby pro daný typ mobility a pro dané město.
+	\end{itemize}
+	% \item vybereme tranzitní stanice v okolí počátečního bodu \footnote{Výběr přestupních stanic je detailněji popsán v kapitole \ref{vyber-tranzitnich-stanic}.},
+	% \begin{itemize}
+	% 	\item TODO. Transit
+	% \end{itemize}
+	\item vytvoříme HexSpace graf \footnote{HexSpace je definován v předchozí kapitole \ref{HexSpace indexovací systém}.},
+	\item do HexSpace grafu vložíme 2 uzly -- počáteční a konečný bod cesty a pro ně vytvoříme Hexagon objekt,
+	\item vybereme vozidla v okolí počátečního bodu\footnote{Vozidla v okolí bodu jsou vybírána pomocí Harvesinova vzorce, který je popsán v kapitole \ref{vyber-docku}.} a přidáme je jako uzly do HexSpace grafu,
+	\item vybereme přestupní stanice v okolí počátečního bodu\footnote{Výběr přestupních stanic je popsán v kapitole \ref{vyber-tranzitnich-stanic}.} a přidáme je jako uzly do HexSpace grafu, 
+	\item asynchronně spočítáme váhy jednotlivých etap tras. Pomocí OSRM a OTP backendů spočítáme 
+	\begin{itemize}
+		\item Time matrix\footnote{Endpoint OSRM s časovou maticí je popsán v \ref{osrm-time-matrix}} z počátečního bodu do bodů s vozidly pomocí chůze (one to many),
+		\item Time matrix z bodů s vozidly do bodů s přestupními stanicemi (many to many),
+		\item Time matrix\footnote{Endpoint OTP s časovou maticí je popsán v \ref{otp-time-matrix}} z přestupních stanic do konečného bodu (many to one).
+
+		% \item Time matrix z bodů s docky do konečného bodu (many to one).
+	\end{itemize}
+
+	\item Do HexSpace grafu přidáme
+
+	\begin{itemize}
+		\item hrany z počátečního uzlu do uzlů se sdílenými vozidly vybranými v předchozím kroku (s přidělenou váhou vytvořenou pomocí OSRM v bodu výše; a módem chůze),
+		\item hrany z uzlů se sdílenými vozidly do uzlů s přestupními stanicemi s přidělenou váhou a módem daného sdíleného prostředku,
+		\item hrany z uzlů se přestupními stanicemi do do konečného uzlu, s přidělenou váhou a módem hromadné dopravy,
+	\end{itemize}
+
+	% \item vytvoříme HexSpace z
+	% \begin{itemize}
+	% 	\item vozidel okolo počátečního bodu,
+	% 	\item stanic okolo počátečního bodu,
+	% \end{itemize}
+	% \item vytvoříme intermodální graf
+	% \begin{itemize}
+	% 	\item vozidel okolo počátečního bodu,
+	% 	\item stanic okolo počátečního bodu,
+	% \end{itemize}
+	\item pomocí Dijskrova algoritmu \footnote{Dijskrův algoritmus je obecně definován kapitole \ref{dijskra}, spolu s konkrétní implementací.} nalezneme základy tras nad HexSpace grafem,
+	% \begin{itemize}
+	% 	\item 
+	% 	\item 
+	% \end{itemize}
+
+	\item optimalizujeme výběr prostředku tak, že pro každou etapu cesty, která je plánována sdíleným prostředkem
+	\begin{itemize}
+		\item vybereme hexagon počátečního bodu a v něm nalezneme nebližší prostředek daného typu a poskytovatele k počátečnímu bodu. Díky tomu minimalizujeme vzdálenost chůze.
+	\end{itemize}
+	\item Vrátíme nejlepší základy tras (základem trasy nazývám takovou trasu, která ještě neobsahuje detailní informace o cestě),
+	\item K základům tras konkurentně spočítáme detaily všech etap trasy tak, že
+	\begin{itemize}
+		\item pro etapy, kde způsob dopravy je sdílený dopravní prostředek nebo chůze, využijeme OSRM backendu,
+		\item pro etapy, kde způsob dopravy je veřejná doprava, využijeme OTP backendu.
+	\end{itemize}
+	\item Vybereme a vrátíme nejrychlejší cestu.
+
+
+
+
+	% \begin{itemize}
+	% 	\item v~případě Windows použijte šablonu pro kódování \mbox{Windows-1250},
+	% 	\item jinak zkuste použít šablonu pro kódování \mbox{ISO-8859-2}.
+	% \end{itemize}
+\end{enumerate}
+
+TODO write similarly for last mile
+
+
+
+TODO write intro
+
+
+\paragraph{Výběr tranzitních stanic} \label{vyber-tranzitnich-stanic}
+
+Multimodální cesty jsou realizovány pomocí takzvaných tranzitních (přestupních) stanic. Jako tranzitní stanici můžeme považovat takovou stanici, která je v určité vzdálenosti od bodu zájmu (tato vzdálenost je dána konfigurací). 
+
+V současné době jsou přestupní stanice hledány naivně, tedy cyklem procházíme přes všechny stanice a pro každou stanici spočítáme vzdálenost od bodu zájmu pomocí Harvesinova vzorce\cite{harvesine}. \footnote{Harvesinův vzorec je detailněji popsán v kapitole \ref{vyber-docku}.}
+	\begin{itemize}
+		\item V případě, že předpoklad platí, stanice je vybrána do dalšího kroku.
+	\end{itemize}
+
+
+% 
+% 	- singlemodal 
+% - multimodal
+% 	- simplifying the graph - transit hubs
+% 		- selecting the transit hubs
+% 			- naively from the list of stations
+% 			- i.e selecting stations from every metro line, bus line, tramline
+% 				- spatial search
+% 				- geospatial system+search (h3)
+% 				- further selection of stations
+% 			- TNR selects a subset T ⊂ V (normally 10 000 nodes) of so called transit nodes and stores distances between them in a ta- ble. Moreover, each node v ∈ V stores the distances to all relevant transit nodes, called access-nodes 
+% 			- Then, with good choice of T , a long-range query can be reduced to three table lookups. In order to decide whether a query is a long-range query, a locality filter is introduced. In case s and t are too close to each other, an arbitrary speed-up technique is applied. The percentage of global queries can be increased by introducing several layers of transit nodes. 
+% 			- 
+% 		- fetching times from backends
+% 		- connecting the legs
+% 		- finding the shortest via cost function
+% 	- recreating the route from respective legs
+
+\subsubsection{Získání dat}
+
+% - ziskani dat
+% - intro k ziskani dat, 
+% - letme popsani sbiraci sluzby, 
+% - ulozeni do redisu
+
+
+\subsubsection{Postup kontejnerizace aplikace}
+
+% best practices
+
+\subsubsection{Hardening kontejneru}
+
+
+\section{Nasazení plánovače}
+
+
+\chapter{Architektura plánovače}
+
+TODO uvod kapitoly plus popis nasledujich sekci
+
+% \section{Nasazení aplikace}
+
 
 
 \subsection{Koncept mikroslužeb}
@@ -318,9 +758,9 @@ Hypervisory typu 2 (také jako hostovaný hypervisor) běží jako další vrstv
 
 Virtualizace založená na kontejnerech (také nazývaná jako virtualizace na úrovni operačního systému, případně kontejnerizace) je odlehčená alternativa k hypervisorům. Tento způsob kontejnerizace využívá funkcí kernelu ze serveru, na kterém virtualizace běží a to tím, že vytváří instance oddělených user-spaců (ve kterých běží skupiny procesů), nazývaných kontejnery. 
 
-Kontejner výpadá z pohledu procesu běžícího uvnitř jako plnohodnotný operační systém. V realitě to ale je oddělený prostor uvnitř hostovacího operačního systému, se kterým sdílí zdroje (sdílí stejný kernel, tedy žádný hypervisor není potřeba). A tedy kontejnery nemají svůj virtualizované hardware (jako např. hypervizor virtualizace). 
+Kontejner výpadá z pohledu uvnitř běžícího procesu jako plnohodnotný operační systém. Reálně to ale je oddělený jmenný prostor uvnitř hostujícího operačního systému, se kterým sdílí zdroje (sdílí společný kernel, tedy žádný hypervisor není potřeba). A tedy kontejnery nemají svůj virtualizované hardware (jako např. hypervizor virtualizace). 
 
-Díky tomu, že kontejnery neemulují žádný hardware, nepotřebují čas pro nastartování operačního systému. Proto nabízí velmi rychlé startovací časy (v milisekundách). Kontejner zabaluje všechny balíčky, které může potřebovat, jako například knihovny, binární soubory, či jiné konfigurace potřebné k nastavení operačního systému. Takovýto menší otisk přínáší několik výhod, jako vyšší výkonnost, zvýšenou bezpečnost či dobrou škálovatelnost.
+Díky tomu, že kontejnery neemulují žádný hardware, nepotřebují čas pro nastartování operačního systému. Proto nabízí velmi rychlé startovací časy (v milisekundách). Kontejner do sebe zabaluje všechny závislosti, které může potřebovat -- jako například knihovny, binární soubory, či jiné konfigurace potřebné k nastavení operačního systému nebo aplikace. Tímto způsobená menší velikost přínáší několik výhod, jako vyšší výkonnost, zvýšenou bezpečnost či dobrou škálovatelnost v porovnání s plnou virtualizací.
 
 Virtualizace založená na kontejnerech může být implementována na jakémkolik operačním systému, každopádně populární techniky, jako třeba Docker jsou založeny na funkcích v Linux kernelu. 
 
@@ -335,17 +775,12 @@ Control Groups (or cgroups) jsou využívány na vynucení limitů na hardware z
 
 Pravidla jsou organizována ve stromové struktuře, jsou děděny a volitelně vrstvena (nestable).
 
-Cgroups mohou být vnímány jako vylepšení nad ulimity/rlimity. Nastavují se pomocí speciálního virtuálního souboru připojeném v cestě /sys/fs/cgroup a mohou být kdykoliv měněny.
+Cgroups mohou být vnímány jako vylepšení nad ulimity/rlimity. Nastavují se pomocí speciálního virtuálního souboru připojeném v cestě \codeword{/sys/fs/cgroup} a mohou být kdykoliv měněny.
 
 Mezi hlavní skupiny cgroup patří CPU, memory, BLKIO, devices, network nebo freezer. V případě, že jsou špatně nastaveny, tak taková chyba může být využita k útěku z kontejneru ven. 
 
-[The main cgroup subsystems are CPU, memory, BLKIO,
-devices, network and freezer. If configured wrong, this can also be a security issue, since
-it can be used for a container escape [36]. In context of container technology, most of
-cgroups management is abstracted away, with the exception of LXC [33].
 
-
- Právě Docker virtualizaci se se bude věnovat další podkapitola.
+Právě Docker virtualizaci se se bude věnovat další podkapitola.
 
 \subsection{Docker}
 
@@ -369,9 +804,6 @@ Docker se zkládá z těchto funkcí:
 \subsubsection{Docker Engine}
 
 Docker Engine je jádro Docker ekosystému, založený na client-server architektuře, která má 3 hlavní komponenty -- Docker démon, REST API poskytované Docker démonem a CLI klient (příkaz docker).
-
-
-
 
 \paragraph{Docker Daemon}
 
@@ -417,21 +849,13 @@ Kubernetes je třetí generace služby pro řízení kontejnerů od Googlu, pře
 \subsubsection{Architektura Kubernetes}
 
 
-% Kubernetes introduces Application-Oriented Infrastructure (AOI) with two motivations:
-% • abstracting away details of machine and operating system from application developer and deployment
-% • single application process per container 
-
-% Design Pattern entails that managing containers mean managing applications, therefore, it shifts the Kube API from machine-oriented to application-oriented and, improves application deployment and introspection
-
-Kubernetes uvádí aplikačně orientovanou architekturu (Application-Oriented Infrastructure AOI)\cite{as-k8s-san-kho-lin}
+Kubernetes uvádí aplikačně orientovanou architekturu \footnote{AOI -- Application-Oriented Infrastructure}\cite{as-k8s-san-kho-lin}
 s motivací:
 
 
 \begin{itemize}  
 \item  Co nejvíce zabstraktnit HW stroj a operační systém od aplikace a nasazení 
 \item  razí pravidlo jedoho procesu na jeden kontejner. Díky tomu pokud řídíme a ovládáme proces, řídíme i aplikaci. Proto posouvá Kubernetes API z infrastrukturně orientovaného na aplikačne orientovaný a zlepšuje vhled (observability) na aplikace a jejich nasazení
-
-
 \end{itemize}
 
 
@@ -440,7 +864,7 @@ s motivací:
 % master vs worker node
 
 %  PSP, Network policy
-% Cognito
+% Calico
 
 % Kubebench
 
@@ -465,21 +889,29 @@ Kapitola níže popíše nejvíce populární aktuálně dostupné managované d
 
 \paragraph{DOKS}
 
-DOKS (Digital Ocean Kubernetes Service) je distribuce od cloudového poskytovatele Digital Ocean. Mezi hlavní výhody DOKS je rychlost vytvoření clusteru, která je nejkratší ze všech poskytovatelů. Další nespornou výhodou, je, že Kubernetes je poměrně čistý (Vanila Kubernetes) a pro začátečníka takové prostředí může být ideální, protože rozdílů od oficiální dokumentace není mnoho. 
+DOKS (Digital Ocean Kubernetes Service)\cite{doks} je distribuce od cloudového poskytovatele Digital Ocean. Mezi hlavní výhody DOKS je rychlost vytvoření clusteru, která je nejkratší ze všech poskytovatelů. Další nespornou výhodou, je, že Kubernetes je poměrně čistý (Vanila Kubernetes) a pro začátečníka takové prostředí může být ideální, protože rozdílů od oficiální dokumentace není mnoho. 
 
 Mezi nevýhody patří poměrně malá nastavitelnost různých parametrů, jako síť, typ load balanceru, atp. 
 
 
 \paragraph{GKE}
 
-GKE (Google Kubernetes Engine) je služba nabízená na GCP (Google Cloud Platform). 
+GKE (Google Kubernetes Engine)\cite{gke} je služba nabízená na GCP (Google Cloud Platform). 
 
 		% vysoka integrace ktery vypada nativne (google)
 
 
+\begin{figure}[H]\centering
+	\includesvg[inkscapelatex=false,width=1\textwidth]{graphs/gke-cluster-architecture.svg}
+
+	\caption[Architektura GKE clusteru]{Architektura GKE clusteru}\label{fig:float}
+\end{figure}
+		
+		
+
 \paragraph{EKS}
 
-EKS (Elastic Kubernetes Service) je služba od AWS (Amazon Web Services). EKS nabízí velké propojení s AWS službami, což s sebou nese výhody, i nevýhody. Výhodou je, že užití EKS je poté téměř bez operačních úkonů a běží bez větších zákroků. Nevýhodou je tzv. vendor-lockin, tj. vysoká komplexita při přechodu z jedné cloudové platformy na druhou.
+EKS (Elastic Kubernetes Service)\cite{eks} je služba od AWS (Amazon Web Services). EKS nabízí velké propojení s AWS službami, což s sebou nese výhody, i nevýhody. Výhodou je, že užití EKS je poté téměř bez operačních úkonů a běží bez větších zákroků. Nevýhodou je tzv. vendor-lockin, tj. vysoká komplexita při přechodu z jedné cloudové platformy na druhou.
 
 % integrace s iam
 
@@ -493,114 +925,7 @@ Nakonec jsem vybral právě EKS díky největším znalostem právě s AWS platf
 
 
 
-% ############ PRAKTIKALES
-% ############ PRAKTIKALES
-% ############ PRAKTIKALES
-% ############ PRAKTIKALES
-% ############ PRAKTIKALES
-% ############ PRAKTIKALES
 
-\chapter{Praktická část}
-
-
-\section{Multimodální plánovač}
-\subsection{Výběr již vytvořených plánovačů s otevřeným kódem}
-% - duvody pro propojeni vice jiz vytvorenych backendu
-% - narocnost na vyvoj vlastniho backendu z akademickych algoritmu (velmi mnoho features)
-
-\subsubsection{Open Source Routing Machine}
-% - vytvoreni grafu z vlozenych dat (Contractions, ohodniceni hran pomoc vyskoveho rasteru do kopce/z kopce, ..)
-
-% - OSRM
-% - upravy
-
-\subsubsection{Open Trip Planner}
-% - preporocessing steps
-
-
-V základě Open Trip Planner nenabízí API endpoint pro vytvoření časové matice\cite{otp-api-spec}. Proto musel být tento endpoint do aplikace doprogramován.
-
-\paragraph{GTFS Data}
-
-Rosšířeným formátem obsahující jízdní řády hromadné dopravy je General Transit Feed Specification (GTFS)\cite{gtfs-spec}. GTFS má v sobě zakódován relevantní informace, jako například geografické lokace, přes které linka projíždí, časy příjezdů a odjezdů ze stanic, či informace o stanicích. Dopravci mohou publikovat své jízdní řády jako GTFS soubory, které mohou vývojáři a aplikace dále využívat.
-
-Pro poskytnutí aktualizovaných informací, jako zpožděné odjezdy či příjezdy mohou být GTFS data dále rozšířena pomocí GTFS Realtime extension. S využitím GTFS Realtime extension mohou být oznámeny události jako výluky či nehody na tratích. V této práci se budeme zabývat pouze GTFS daty bez rozšíření.
-
-Díky integraci OTP s GTFS daty je právě této služby využíváno k plánování tras pomocí městské hromadné dopravy.
-
-
-% - GTFS data
-% 	- ziskani, potrebne upravy
-% 	- gtfs checkers that validate invalid entries, fix them and pass further
-
-% - uprava gtfs dat
-% - Comparison of Open Source routing services with OpenStreetMap Data for blind pedestrians 
-% - OTP
-% - upravy
-% - algo - A*, CH on non transit parts
-% - raptor not yet, in v2
-% - https://wiki.openstreetmap.org/wiki/OpenTripPlanner#Routing 
-% - https://blog.conveyal.com/opentripplanner-nearing-a-decade-of-progress-on-multimodal-routing-bc668432d3fe
-% - This is a list of articles, dissertations, and books that have inspired and informed both the existing OTP routing engine and some ongoing experiments. Currently, OpenTripPlanner uses a single time-dependent (as opposed to time-expanded) graph that contains both street and transit networks. Walk-only and bicycle-only trips are generally planned using the A* algorithm with a Euclidean heuristic or contraction hierarchies. Walk+Transit or Bike+Transit trips are planned using a variant of the MOA* algorithm with epsilon-dominance for path pruning and the Tung-Chew heuristic (a graph providing a lower bound on aggregate weight) for queue ordering.
-% - 
-
-
-\subsection{Návrh plánovací služby}
-
-% - popis multimodal routing služby, její API endpointy, komunikace s ostatními službami (databáze, sdílená cache obsahující lokace dopravních prostředků, podpůrné služby pro navigaci - OTP pro MHD, OSRM pro singlemodální plánování cest, ..)
-
-
-\subsubsection{Design aplikace}
-
-
-\paragraph{API endpointy}
-
-
-\subsubsection{Možnosti plánovače}
-
-\paragraph{Singlemodální s využitím sdílených prostředků}
-% 	- singlemodal bike
-% servisni zony
-% vraceni v docku
-
-\paragraph{Singlemodální s využitím hromadné dopravy}
-% \paragraph{}
-\paragraph{Multimodální s využitím hromadné dopravy a sdílených kol}
-
-% 
-% 	- singlemodal 
-% - multimodal
-% 	- simplifying the graph - transit hubs
-% 		- selecting the transit hubs
-% 			- naively from the list of stations
-% 			- i.e selecting stations from every metro line, bus line, tramline
-% 				- spatial search
-% 				- geospatial system+search (h3)
-% 				- further selection of stations
-% 			- TNR selects a subset T ⊂ V (normally 10 000 nodes) of so called transit nodes and stores distances between them in a ta- ble. Moreover, each node v ∈ V stores the distances to all relevant transit nodes, called access-nodes 
-% 			- Then, with good choice of T , a long-range query can be reduced to three table lookups. In order to decide whether a query is a long-range query, a locality filter is introduced. In case s and t are too close to each other, an arbitrary speed-up technique is applied. The percentage of global queries can be increased by introducing several layers of transit nodes. 
-% 			- 
-% 		- fetching times from backends
-% 		- connecting the legs
-% 		- finding the shortest via cost function
-% 	- recreating the route from respective legs
-
-\subsubsection{Získání dat}
-
-% - ziskani dat
-% - intro k ziskani dat, 
-% - letme popsani sbiraci sluzby, 
-% - ulozeni do redisu
-
-
-\subsubsection{Postup kontejnerizace aplikace}
-
-% best practices
-
-\subsubsection{Hardening kontejneru}
-
-
-\section{Nasazení plánovače}
 
 \subsection{Distribuovaná architektura}
 
@@ -618,39 +943,37 @@ Pro replikovatelnost řešení této práce budeme používat právě IaC pro po
 
 \paragraph{Výhody IaC}
 
-Využití Softwarově definované architektury má několik hlávních výhod.
-
-\paragraph{Jednoduše a rychle reprodukovatelné systémy}
-
-S použitím IaC mohou administrátoři rychle nasadit a nastavit celou infrastrukturu spuštěním jednoho jednoduchého příkazu, či skriptu.
-
-IaC skripty popisují všechny nutné kroky pro vytvoření požadovaného systému, jako například velikost instance, nainstalovaný software dané verze, nastavení firewallu, atp.
-
-\paragraph{Jednorázové systémy}
+Využití Softwarově definované architektury má několik hlávních výhod, které jsou popsané níže.
 
 
-IaC přeměnila starý, statický přístup k systémům na dynamický, kde již neměníme staré instance daného zdroje, ale pro jednoduchost vytvoříme nový. Po té, co je jisté, že zdroj pracuje korektně, nahradí starou instanci. Díky tomu je jednodužší programy přesouvat z jednoho serveru na druhý bez velkých potíží. Toto pomáhá také s aktualizacemi potřebných knihoven či operačního systému. Takovýto způsob myšlení je nutný v případech, kdy potřebujeme dynamicky škálovat systémy a nemůžeme se spolehnout na hardware, na kterém aplikace běží.
+\begin{itemize}  
 
-\paragraph{Konzistence konfigurace}
+	\item \textbf{Jednoduše a rychle reprodukovatelné systémy}
 
+	S použitím IaC mohou administrátoři rychle nasadit a nastavit celou infrastrukturu spuštěním jednoho jednoduchého příkazu, či skriptu.
 
+	IaC skripty popisují všechny nutné kroky pro vytvoření požadovaného systému, jako například velikost instance, nainstalovaný software dané verze, nastavení firewallu, atp.
 
-Lidské chyby vždy způsobovaly problémy při konzistenci konfigurace, a to i v případech, kdy jsou následovány procesy a postupy. Manuální úpravy vytvoří menší či větší odchylky od původního zdrojového kódu, což zvyšuje pravděpodobnost složitosti a časové náročnosti při opravě softwarové chyby. 
+	\item \textbf{Jednorázové systémy} 
 
-IaC plně standardizuje konfiguraci infrastruktury a díky tomu nenechává moc prostoru lidské chybě.
+	IaC přeměnila starý, statický přístup k systémům na dynamický, kde již neměníme staré instance daného zdroje, ale pro jednoduchost vytvoříme nový. Po ujištění, že nový zdroj pracuje korektně, nahradí starou instanci. Díky tomu je možné programy přesouvat z jednoho serveru na druhý bez velkých potíží. To pomáhá také s aktualizacemi potřebných knihoven nebo operačního systému. Změna způsobu myšlení je proto nutná v případech, kdy potřebujeme dynamicky škálovat systémy a nemůžeme se spolehnout na hardware, na kterém aplikace běží. Obecně jsou tyto dva způsoby administrování architektury nazývány jako cattle (dobytek, tj. nový způsob, kde neřešíme konkrétní instance) versus pets (mazlíčci, tj. starý způsob, kde se o každou instanci staráme jednotilivě). \cite{cattle-pets}
 
+	\item \textbf{Konzistence konfigurace} 
 
+	Lidská práce způsobuje a vždy způsobovala problémy při konzistenci konfigurace. A to i v případech, kdy jsou následovány procesy a postupy. Manuální úpravy vytvoří menší či větší odchylky od původního zdrojového kódu, což zvyšuje pravděpodobnost složitosti a časové náročnosti při opravě softwarové chyby. 
 
-\paragraph{Samodokumentující se systémy}
+	IaC plně standardizuje konfiguraci infrastruktury a díky tomu nenechává moc prostoru lidské chybě.
 
-Obvzáště v malých a pružných projektech se bojujeme s tím, aby dokumentace byla užitečná a přesně popisující daný problém. S tím, jak dokumentaci, či program upravujeme, tím více je pravděpodobnost nekonzistence dokumentace a problému vyšší. Další problém je to, že různí lidé mají různé způsoby psaní dokumentace a jejich vysvětlení nemusí být hned čtenáři zřejmé. I díky tomu většina dokumentací přesně nereprezentuje to, co daný problém znamená. IaC toto řeší tím, že definici a dokumentaci generuje přímo z kódu a právě kvůli tomu máme informace vždy aktuální. K tomu je třeba dopsat jen malé části dokumentace k dovysvětlení hůře pochopitelných částí.  
+	\item \textbf{Sebe se dokumentující systémy} 
 
+	Obvzáště v menších a dynamicky vyvíjených projektech se bojujeme s problémem, že dokumentace není užitečná, nebo nepřesně popisuje daný problém. S tím, jak dokumentaci či program upravujeme, tím je pravděpodobnější nekonzistentnost mezi  dokumentací a kódem programu/infrastruktury. Další problémem je, že různí lidé různě zapisují dokumentaci a jejich vysvětlení problému nemusí být hned čtenáři zřejmé. I díky tomu většina dokumentací přesně nereprezentuje to, co daný problém znamená. IaC toto řeší tím, že definici a dokumentaci generuje přímo z kódu a právě kvůli tomu máme informace vždy aktuální. K tomu je třeba dopsat jen malé části dokumentace k dovysvětlení hůře pochopitelných částí.  
 
-\paragraph{Verzování všeho}
+	\item \textbf{Verzování všeho} 
 
-S tím, jak máme definici infrastruktury v kódu, se nám otvírá možnost použít verzovací systém pro sledování změn, a případně vrácení se ke starší verze infrastruktury, v případě, že se objevily nějaké problémy.
+	S tím, jak máme definici infrastruktury v kódu, se nám otvírá možnost použít verzovací systém pro sledování změn, a případně vrácení se ke starší verze infrastruktury, v případě, že se objevily nějaké problémy.
 
-Verzovací systémy \footnote{VCS -- Version Control System} nám nabízí zobrazení změn, obsahující všechny implementované změny, důvod, a osobu, která změny vytvořila. Taková funkce přidává užitečnost v případě oprav kódu, protože se jednouduše můžeme obrátit na člověka, který danou část změnil. 
+	Verzovací systémy \footnote{VCS -- Version Control System} nám nabízí zobrazení změn, obsahující všechny implementované změny, důvod, a osobu, která změny vytvořila. Taková funkce přidává užitečnost v případě oprav kódu, protože se jednouduše můžeme obrátit na člověka, který danou část změnil. 
+\end{itemize}
 
 \paragraph{Terraform}
 
@@ -664,7 +987,7 @@ Terraform popisuje infrastrukturu pomocí konfiguračních souborů, jež jsou p
 % Architektura systemu a designova rozhodnuti
 
 \begin{figure}[H]\centering
-	\includesvg[width=1.2\textwidth]{graphs/aws-diagram.drawio.svg}
+	\includesvg[inkscapelatex=false,width=1\textwidth]{graphs/aws-diagram.drawio.svg}
 
 	\caption[Návrh architektury v AWS cloudu]{Návrh architektury v AWS cloudu}\label{fig:float}
 \end{figure}
@@ -673,7 +996,7 @@ Terraform popisuje infrastrukturu pomocí konfiguračních souborů, jež jsou p
 \subsubsection{Návrh kubernetes clusteru}
 
 \begin{figure}[H]\centering
-	\includesvg[width=1.3\textwidth]{graphs/kubernetes.drawio.svg}
+	\includesvg[inkscapelatex=false,width=1\textwidth]{graphs/kubernetes.drawio.svg}
 
 	\caption[Rozvržení podů a služeb v Kubernetes clusteru]{Rozvržení podů a služeb v Kubernetes clusteru}\label{fig:float}
 \end{figure}
@@ -707,7 +1030,7 @@ Pro zvýšení důvěry ve správnost a kvalitu softwaru, Fowler et al. \cite{mi
 
 
 \begin{figure}[H]\centering
-	\includesvg[width=1.2\textwidth]{graphs/api-gateway.drawio.svg}
+	\includesvg[inkscapelatex=false,width=1\textwidth]{graphs/api-gateway.drawio.svg}
 
 	\caption[Diagram komunikace klienta se službou]{Diagram komunikace klienta se službou}\label{fig:float}
 \end{figure}
@@ -720,7 +1043,7 @@ Pro zvýšení důvěry ve správnost a kvalitu softwaru, Fowler et al. \cite{mi
 Diagram níže popisuje rozvržení sítě po plánovací aplikaci v cloudové platformě AWS. Základní oddělovací částí v AWS je VPC (Virtual Private Cloud)\cite{aws-vpc}, umožňující vytvoření logicky izolované části AWS cloudu do které se nasazují AWS zdroje dle nastavení virtuální sítě.
 
 \begin{figure}[H]\centering
-	\includesvg[width=1\textwidth]{graphs/vpc.drawio.svg}
+	\includesvg[inkscapelatex=false,width=1\textwidth]{graphs/vpc.drawio.svg}
 
 	\caption[Rozvržení subnetů využitých pro aplikaci v jednom AWS regionu]{Rozvržení subnetů využitých pro aplikaci v jednom AWS regionu}\label{fig:float}
 \end{figure}
@@ -770,7 +1093,7 @@ Diagram níže ukazuje CI/CD proces pro plánovací službu z této práce.
 
 
 \begin{figure}[H]\centering
-	\includesvg[width=1\textwidth]{graphs/CICD.drawio.svg}
+	\includesvg[inkscapelatex=false,width=1\textwidth]{graphs/CICD.drawio.svg}
 
 	\caption[Diagram v CI pipeline]{Diagram v CI pipeline}\label{fig:float}
 \end{figure}
@@ -808,6 +1131,21 @@ Aplikace obsahuje tyto Kubernetes objekty:
 \paragraph{IngressRoute}
 \paragraph{ServiceMonitor}
 % \paragraph{ServiceMonitor}
+
+\section{Škálování aplikace}
+
+% Popis jak skalovat
+
+\subsection{Bezstavová aplikace}
+
+% Popis ze aplikace je bezstavova, tj. neni treba zadna komunikace mezi jednotlivymi replikami
+
+\subsection{Horizontální škálování}
+\subsubsection{Horizontální škálování uzlů clusteru}
+\subsubsection{Horizontální škálování podů}
+
+\subsection{Vertikální škálování}
+
 
 
 \chapter{Možná vylepšení do budoucnosti}
@@ -998,6 +1336,99 @@ Google Developers. GTFS Static Overview | Static Transit | Google Developers. [O
 \bibitem{otp-api-spec}
 
 http://dev.opentripplanner.org/apidoc/1.0.0/index.html
+
+\bibitem{k8s-up-and-running}
+
+Hightower, Kelsey, Brendan Burns, and Joe Beda. Kubernetes: up and running: dive into the future of infrastructure. 1 ed. USA: O’Reilly Media, Inc, 2017.
+ISBN 9781491935675.
+
+
+\bibitem{oss-benchmark-microservices}
+
+Gan, Yu, Yanqi Zhang, and Dailun Cheng et al. An Open-Source Benchmark
+Suite for Microservices and Their Hardware-Software Implications for Cloud \&
+Edge Systems. In: International Conference on Architectural Support for Programming Languages and Operating Systems - ASPLOS. 2019. ISBN 9781450362405.
+
+
+\bibitem{otp-site}
+
+
+http://docs.opentripplanner.org/en/dev-2.x/
+
+
+\bibitem{gtfs-prague}
+
+
+\url{https://opendata.praha.eu/dataset?organization=dpp&res_format=GTFS}
+
+
+\bibitem{lgpl}
+
+http://www.gnu.org/licenses/lgpl-3.0.en.html
+
+
+\bibitem{lgpl-stallman}
+
+http://www.gnu.org/licenses/why-not-lgpl.html
+
+\bibitem{osrm-webpage}
+
+http://project-osrm.org/
+
+\bibitem{cattle-pets}
+
+https://www.hava.io/blog/cattle-vs-pets-devops-explained
+
+
+\bibitem{doks}
+
+https://www.digitalocean.com/docs/kubernetes/
+
+
+\bibitem{gke}
+https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-architecture
+
+
+\bibitem{eks}
+https://docs.aws.amazon.com/eks/latest/userguide/clusters.html
+
+
+\bibitem{h3}
+
+https://eng.uber.com/h3/
+
+
+\bibitem{discrete-global-grid}
+
+Geodesic Discrete Global Grid Systems
+Kevin Sahr, Denis White, and A. Jon Kimerling
+http://webpages.sou.edu/~sahrk/sqspc/pubs/gdggs03.pdf
+
+\bibitem{shapely}
+
+https://shapely.readthedocs.io/en/stable/manual.html
+
+
+\bibitem{shapely-nearest-points}
+
+
+\url{https://shapely.readthedocs.io/en/stable/manual.html#shapely.ops.nearest_points}
+
+\bibitem{harvesine}
+
+MĚŘENÍ VZDÁLENOSTÍ A PLOCHY POMOCÍ GPS, DIPLOMOVÁ PRÁCE,  Bc. JAKUB KONECKÝ, 2009
+
+
+\bibitem{osrm-table-api}
+
+\url{http://project-osrm.org/docs/v5.5.1/api/#table-service}
+
+\bibitem{osrm-route-api}
+
+\url{http://project-osrm.org/docs/v5.5.1/api/#route-service}
+
+
+
 
 \end{thebibliography}
 
