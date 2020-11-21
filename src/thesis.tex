@@ -131,6 +131,7 @@ První částí je plánovač cest ve městech. Výstupem navrhovaného plánova
 Druhou částí je navržení nasazení aplikace do distribuovaného systému Kubernetes. Bude diskutováno, proč Kubernetes byl vybrán a jeho součásti budou popsány. V nasazení má být brán důraz na několik faktorů. Jedním z ním je bezpečnost aplikace běžící v otevřeném internetu. Tedy je důležité mít komunikaci s aplikací řešenou šifrovaně. Práce bude popisovat autentizaci a autorizaci přístupů do jednotlivých částí API rozhraní aplikace. Důležitá je též vysoká dostupnost aplikace, budou tedy popsány mechanismy vysoké dostupnosti v distribuovaném systému, a to i při opakovaném nasazování. Budou diskutovány způsoby nasazení, mezi ně patřící Blue/Green deployment, Carnary releases, Rolling updates atp. Nasazování bude řešeno automatizovaně, spolu s porovnáním poskytovatelů CD (automatizovaných deploymentů/nasazení).
 
 \chapter{Multimodální plánovač}
+
 \section{Základy teorie grafů}
 
 Pro pochopení problému hledání cest je prvně třeba definovat jednotlivé stavební bloky. Práce tedy v kapitole níže popíše relevantní definice z teorie grafů.
@@ -207,15 +208,15 @@ Kružnice délky $n$ má $n \geq 3$ vrcholů spojených do jednoho cyklu $n$ hra
 
 
 
-\section{Plánování cest}
+% \section{Plánování cest}
 
 
 
-\subsection{Modely}
+\section{Modely pro plánování cest}
 
 Podkapitoly níže představí časově závislé a časově nezávislé modely, nutné k pochopení plánování cest v těchto modelech.
 
-\subsubsection{Časově nezávislý model}
+\subsection{Časově nezávislý model}
 
 Způsoby dopravy, kde se nemusíme řídit žádným jízdím řádem, či předem určenými zastávkami, přiřazujeme k časově nezávislému modelu. Mezi tyto způsoby dopravy řadíme například jízdní kola, taxi, chůzi, služby sdílení aut (carsharing) atp. K plánování cest v takovémto modelu můžeme využít konvenčních algoritmů. Určitě jsou rozdíly mezi různými dopravními prostředky, například  pro cyklistické kolo je třeba nastavit jinou cestovní rychlost, než na auto. 
 
@@ -224,7 +225,7 @@ Silniční síť je modelována jako časově nezávislý model, tj. jako orient
 
 
 
-\subsubsection{Časově závislý model}
+\subsection{Časově závislý model}
 
 V minulé kapitole jsme diskutovali, jak řešit plánování cesty v silničním (časově nezávislém) modelu. V této kapitole budeme zkoumat model časově závislý, tedy pro veřejnou dopravu. Zde se budeme dotýkat pouze prostředků jako autobus, tramvaj, vlak -- tedy těch, které zavisí na nějakém předem určeném jízdním řádu. Z toho vychází název "časově závislý".
 
@@ -235,25 +236,6 @@ Jízdní řád může být modelován dvěmi základními přístupy, a to jako 
 Časově závislý model byl prvně prezentován v Brodal and Jacob (2004)\cite{time-dependent-networks-as-models-to-achieve-fast-exact-time-table-queries}. Model má v učitých místech podobnosti k časově nezávislému modelu. V tomto modelu uzly  $ s \in V $ korespondují z zastávkám hromadné dopravy a hrana $ (s, t) \in A, s \neq t $ existuje, pokud dopravní prostředek jede ze stanice $s$ do stanice $t$ a nikde mezitím nezastavuje. Hlavním rozdílem k časově nezáviskému modelu je to, že hrana existuje pouze v určité časy a tedy čas cesty závisí na čase, kdy jsme dorazili do startovního uzlu. Tato informace je zakódována jako funkce doby cesty mezi uzly $s$ a $t$.
 
 
-\subsection{Problém nejdřívějšího příjezdu}
-
-
-\subsection{Hledání nejkratší cesty}
-
-\subsubsection{many to many}
-
-\subsubsection{one to many}
-
-\subsubsection{many to one}
-
-
-\subsection{Algoritmy k hledání nejkratší cesty}
-\subsubsection{Hledání cest v silničních sítích}
-
-\paragraph{Dijskra}
-\paragraph{A star}
-\paragraph{Contraction Hierarchies}
-\subsubsection{Hledání cest v sítích s městskou hromadnou dopravou}
 
 \subsection{HexSpace indexovací systém} \label{HexSpace indexovací systém}
 
@@ -286,6 +268,136 @@ V mojí konkrétní implementaci budu takovýto indexovací systém reprezentova
 
 
 \end{enumerate}
+
+
+% \subsection{Problém nejdřívějšího příjezdu}
+
+
+\section{Hledání nejkratší cesty}
+
+V této kapitole představíme algoritmy k plánování cest.
+
+
+\subsection{Problém nejkratší cesty}
+
+Prvně je důležité formálně popsat problém nejkratší cesty. 
+
+\begin{defn}\label{thm:graf}
+	Nechť $G = (V,E)$ je vážený, orientovaný nebo neorientovaný graf. 
+
+	Váha cesty $P = <v_0,v_1,v_2, \cdots, v_k>$ je $w(P) =
+	  \sum_{i=1}^k w(v_{i-1},v_i)$. 
+	
+	Nejkratší cesta  $\delta(u,v)$ z $u$ do $v$ má váhu
+	  
+	  \[ \delta(u,v) = \left\{ \begin{array}{ll}
+					\min\{w(P): \mbox{$P$ je cesta z $u$ do $v$}\} & \mbox{pokud cesta existuje} \\
+					\infty                                     & \mbox{jinak} \\
+				  \end{array} \right. \]
+								
+				\cite{spp-def}
+	
+	
+\end{defn}
+	
+
+Mezi vlastnosti nejkratších cest patří
+            
+\begin{itemize}
+\item Části cest z nejkratších cest jsou také nejkratší cesty: Pokud $P =
+  <u=v_0,v_1,v_2, \cdots, v_k=v>$ je nejkratší cesta z $u$ do $v$,
+  pak pro $i<k$ $P'= <u=v_0,v_1,v_2, \cdots, v_i>$ je nejkratší cesta z $u$ do $v_i$
+  
+  
+\item Neexistuje nejkratší cesta, pokud graf má cyklus s negativní vahou.  \footnote{V práci pouze bereme v potaz grafy, které nemají hrany s negativními vahami. Je možné najít nejkratší cestu v grafu, který má hrany s negativními vahami (Ale ne negativními cykly), ale ne všechny algoritmy lze pro takový graf použít a obecně tyto algoritmy jsou pomalejší.}
+  
+% Pozn. 
+
+\end{itemize}
+
+
+
+Existují rozdílné varianty problému nejkratších cest. Níže letmě zmíním ty varianty, které jsou pro práci relevantní.
+
+% \begin{itemize}
+% 	\item 
+
+% \end{itemize}
+
+
+  \begin{itemize}
+  \item {\em Nejkratší cesta mezi dvojicí uzlů}: Nalezení nejkratší cesty z  $u$  do $v$ (1:1)
+  \item {\em Nejkratší cesta z daného uzlu grafu do všech ostatních uzlů grafu -- Single source shortest path (SSSP)}: Nalezení nejkratší cesty z  $s$ od všech uzlů $v \in V$ (1:N)
+  \item {\em Nejkratší cesta mezi všemi dvojicemi uzlů grafu -- All pair shortest path (APSP)}: Nalezení nejkratší cesty z $u$ do $v$  pro všechny $u,v \in V$ (N:N)
+  \end{itemize}
+
+Každá z těchto variant problému nejkratší cesty lze vyřešit pomocí Dijskrova algoritmu (někdy opakovaným spuštěním, např. u APSP). Dijskrův algoritmus bude popsán v kapitole níže. 
+
+
+
+
+
+
+
+% \subsubsection{many to many}
+
+% \subsubsection{one to many}
+
+% \subsubsection{many to one}
+
+
+\subsection{Algoritmy k hledání nejkratší cesty}
+
+% \subsubsection{Hledání cest v silničních sítích}
+
+\subsubsection{Dijskrův algoritmus}
+
+Práce nazvaná 'A Note on Two Problems in Connexion with Graphs' byla publikována v žurnálu 'Numerische Mathematik' v roce 1959. bylo to právě v této práci, kde Edsger W. Dijkstra navrhl Dijkstrův algoritmus pro řešení  různých variant problému nejkratších cest.
+
+\paragraph{Princip Dijskrova algoritmu}
+
+V následujících krocích popíši, jak Dijskrův algoritmus funguje.
+\begin{description}
+\item [Krok 1]
+Prvně přiřaď $Node(A) = 0$ jako váhu počátečního uzlu a $w(x) = \infty$ všem ostatním uzlům, kde $x$ josu ostatní uzly.
+\item[Krok 2]
+Hledej uzel $x$, který má nejmenší dočasnou váhu $w(x)$. Zastav algoritmus, pokud $w(x) = \infty$ nebo už nejsou žádné dočasné uzly. Uzel $x$ je teď uznačen jako trvalý a aktuální uzel, což znamená, žr $x$ a $w(x)$ se již nezmění.   
+\item[Krok 3]
+Pro každý přilehlý uzel k $x$, označený $y$, pokud je $y$ stále dočasný, aplikuj: 
+pokud $w(x) + Wxy < w(y)$, pak $w(y)$ je nastaven na $w(x) + Wxy$, kde W je váha přilehlého uzlu. Přiřaď y, aby měl nadřazený uzel $x$
+\item[Krok 4]
+Opakuj Krok 2 dokud není nalezena nejkratší cesta. 
+\end{description}
+
+Hlavním využitím Dijskrova algoritmu je pro hledání cest v silničních sítích (tak, jak se jim věnuje tato práce). Dalším využitím je Open Shortest Path First (OSPF) algoritums, díky kterému se směruje v síti Internet.
+
+
+
+
+\section{Implementace Dijkstrova algoritmu}
+
+
+
+
+\begin{verbatim}
+def shortest_path(graph, start_vertex, goal_node):
+    distances, paths = dijkstra(graph, start_vertex)
+    route = [goal_node]
+    while goal_node != start_vertex:
+        route.append(paths[goal_node])
+        goal_node = paths[goal_node]
+    route.reverse()
+    return route
+\end{verbatim}
+
+
+
+\subsubsection{A star}
+\subsubsection{Contraction Hierarchies}
+
+
+\subsection{Hledání cest v sítích s městskou hromadnou dopravou}
+
 \subsection{Multimodální plánování cest}
 
 % teorie jak je to aktualne reseno v napr. OTP
@@ -395,23 +507,23 @@ V základě Open Trip Planner nenabízí API endpoint pro vytvoření časové m
 % - 
 
 
-\subsection{Návrh plánovací služby}
+% \subsection{Návrh plánovací služby}
 
 % - popis multimodal routing služby, její API endpointy, komunikace s ostatními službami (databáze, sdílená cache obsahující lokace dopravních prostředků, podpůrné služby pro navigaci - OTP pro MHD, OSRM pro singlemodální plánování cest, ..)
 
 
-\subsubsection{Design aplikace}
+% \subsubsection{Design aplikace}
 
 
-\paragraph{API endpointy}
+% \paragraph{API endpointy}
 
 
 
 
 
-\subsubsection{Možnosti plánovače}
+\subsection{Možnosti plánovače}
 
-\paragraph{Singlemodální s využitím sdílených prostředků}
+\subsubsection{Singlemodální s využitím sdílených prostředků}
 % 	- singlemodal bike
 % servisni zony
 % vraceni v docku
@@ -488,33 +600,10 @@ TODO write intro + endpointy pro bike, scooters, carshare, etc
 \end{enumerate}
 
 
-\paragraph{Výběr bodů ze servisních zón}\label{vyber-zon}
-
-K manipulaci s prostorovými daty je k výběru nejbližšího bodu v sesrvisní zóně využito knihovny shapely \cite{shapely}. V tomto případě máme nějaký konkrétní bod (buď  cílový bod u singlemodálních cest, nebo cílový krok etapy u multimodálních cest) a nějaký polygon, značící servisní zónu, kam sdílený prostředek můžeme vrátit.
-
-\begin{figure}[H]\centering
-	% \includegraphics[width=0.5\textwidth, angle=30]{cvut-logo-bw}
-	\includegraphics[width=1\textwidth]{graphs/service-zone-selection.jpg}
-
-	\caption[Servisní zóna a bod mimo zónu]{Servisní zóna a bod mimo zónu}\label{fig:service-zone}
-	% \label{fig:service-zone}
-
-\end{figure}
-
-Diagram \ref{fig:service-zone} zobrazuje tyto dva objekty. K nalezení nejbližšího bodu v servisní zóně je využito funkce \codeword{nearest_points(geom1, geom2)}, kde \codeword{geom1} a \codeword{geom2} jsou nějaké geometrické objekty.
-
-\paragraph{Výběr relevantních docků}\label{vyber-docku}
-
-Někteří poskytovatelé sdílené mobility vyžadují, aby jejich vozidla byla vracena ve stojanech. Následující odstavec popisuje, jak relevantní stojany vybrat. Výběr stojanů je poměrně jednoduchý, tedy v okruhu (s předem daným poloměrem) od předem daného bodu zájmu (například cílový bod cesty).
-
-Použitý algoritmus je naivní, tedy, že cyklem procházíme přes všechny stojany, a pro každý stojan spočítáme vzdálenost od bodu zájmu dle Harvesinova vzorce. Pokud je vzdálenost menší, než předem daný poloměr, stojan vybereme pro pozdější výpočty.
-
-Pomocí Harvesinova vzorce\cite{harvesine} je možné spočítat vzdálenost dvou bodů jako vzdálenost dvou bodů po kulové ploše. Harvesinova metoda obsahuje nepřesnost, protože bere jako model kouli (skutečný tvar Země se od tvaru koule mírně liší, což ale na kratších vzdálenostech, jako cesty po městě, je zanedbatelný problém). 
 
 
 
-
-\paragraph{Singlemodální s využitím hromadné dopravy}
+\subsubsection{Singlemodální s využitím hromadné dopravy}
 
 Pro plánování cest s hromadnou dopravou je využito aplikace OpenTripPlanner zmíněného výše. Plánování cest tímto způsobem je poměrně přímočaré. Je třeba mít dostupný OTP backend, ideálně nasazený ve stejném clusteru jako plánovací aplikace.
 
@@ -552,7 +641,7 @@ Plán cesty s hromadnou dopravou se zkládá z těchto kroků:
 
 
 % \paragraph{}
-\paragraph{Multimodální s využitím hromadné dopravy a sdílených kol}
+\subsubsection{Multimodální s využitím hromadné dopravy a sdílených kol}
 
 
 Plán cesty s hromadnou dopravou a (kolo, koloběžka, skutr, atd) se skládá z těchto kroků:
@@ -634,8 +723,34 @@ TODO write similarly for last mile
 
 TODO write intro
 
+\subsection{Pomocné funkce plánovače} 
 
-\paragraph{Výběr tranzitních stanic} \label{vyber-tranzitnich-stanic}
+\subsubsection{Výběr bodů ze servisních zón}\label{vyber-zon}
+
+K manipulaci s prostorovými daty je k výběru nejbližšího bodu v sesrvisní zóně využito knihovny shapely \cite{shapely}. V tomto případě máme nějaký konkrétní bod (buď  cílový bod u singlemodálních cest, nebo cílový krok etapy u multimodálních cest) a nějaký polygon, značící servisní zónu, kam sdílený prostředek můžeme vrátit.
+
+\begin{figure}[H]\centering
+	% \includegraphics[width=0.5\textwidth, angle=30]{cvut-logo-bw}
+	\includegraphics[width=1\textwidth]{graphs/service-zone-selection.jpg}
+
+	\caption[Servisní zóna a bod mimo zónu]{Servisní zóna a bod mimo zónu}\label{fig:service-zone}
+	% \label{fig:service-zone}
+
+\end{figure}
+
+Diagram \ref{fig:service-zone} zobrazuje tyto dva objekty. K nalezení nejbližšího bodu v servisní zóně je využito funkce \codeword{nearest_points(geom1, geom2)}, kde \codeword{geom1} a \codeword{geom2} jsou nějaké geometrické objekty.
+
+\subsubsection{Výběr relevantních docků}\label{vyber-docku}
+
+Někteří poskytovatelé sdílené mobility vyžadují, aby jejich vozidla byla vracena ve stojanech. Následující odstavec popisuje, jak relevantní stojany vybrat. Výběr stojanů je poměrně jednoduchý, tedy v okruhu (s předem daným poloměrem) od předem daného bodu zájmu (například cílový bod cesty).
+
+Použitý algoritmus je naivní, tedy, že cyklem procházíme přes všechny stojany, a pro každý stojan spočítáme vzdálenost od bodu zájmu dle Harvesinova vzorce. Pokud je vzdálenost menší, než předem daný poloměr, stojan vybereme pro pozdější výpočty.
+
+Pomocí Harvesinova vzorce\cite{harvesine} je možné spočítat vzdálenost dvou bodů jako vzdálenost dvou bodů po kulové ploše. Harvesinova metoda obsahuje nepřesnost, protože bere jako model kouli (skutečný tvar Země se od tvaru koule mírně liší, což ale na kratších vzdálenostech, jako cesty po městě, je zanedbatelný problém). 
+
+
+
+\subsubsection{Výběr tranzitních stanic} \label{vyber-tranzitnich-stanic}
 
 Multimodální cesty jsou realizovány pomocí takzvaných tranzitních (přestupních) stanic. Jako tranzitní stanici můžeme považovat takovou stanici, která je v určité vzdálenosti od bodu zájmu (tato vzdálenost je dána konfigurací). 
 
@@ -671,14 +786,15 @@ V současné době jsou přestupní stanice hledány naivně, tedy cyklem proch�
 % - ulozeni do redisu
 
 
+
+
+\section{Nasazení plánovače}
+
 \subsubsection{Postup kontejnerizace aplikace}
 
 % best practices
 
 \subsubsection{Hardening kontejneru}
-
-
-\section{Nasazení plánovače}
 
 
 \chapter{Architektura plánovače}
@@ -1428,6 +1544,12 @@ MĚŘENÍ VZDÁLENOSTÍ A PLOCHY POMOCÍ GPS, DIPLOMOVÁ PRÁCE,  Bc. JAKUB KONE
 \url{http://project-osrm.org/docs/v5.5.1/api/#route-service}
 
 
+\bibitem{spp-def}
+
+Algoritmy pro hledání nejkratších cest
+v neorientovaných grafech , BAKALÁŘSKÁ PRÁCE
+Richard Benkovský , 2007, MASARYKOVA UNIVERZITA
+FAKULTA INFORMATIKY 
 
 
 \end{thebibliography}
