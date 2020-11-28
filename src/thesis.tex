@@ -624,8 +624,8 @@ Pro plánování cest s hromadnou dopravou je využito aplikace OpenTripPlanner 
 
 Plán cesty s hromadnou dopravou se zkládá z těchto kroků:
 
-\begin{enumerate}
-	\item Z požadavku od klienta převezmeme potřebné parametry. Mezi teto parametry patří
+\begin{description}
+	\item [Krok 1] Z požadavku od klienta převezmeme potřebné parametry. Mezi teto parametry patří
 	\begin{itemize}
 		\item zeměpisné délky a šířky počátečního a konečného bodu,
 		\item výběr města (toto je z důvodu, že mapový podklad je omezen vždy na jedno město hlavně kvůli šetření paměti),
@@ -633,12 +633,12 @@ Plán cesty s hromadnou dopravou se zkládá z těchto kroků:
 		\item a další dodatečné parametry k vyhledání nejvhodnější cesty. Mezi tyto dodatečné parametry patří maximální délka chůze, maximální počet přestupů a  minimální čas přestupu.
 	\end{itemize}
 
-	\item Z požadavku od klienta vytvoříme požadavek pro OpenTripPlanner. K požadavku přidáme dodatečné parametry z předchozího kroku, které OTP podporuje. Požadavek poté odešleme na OpenTripPlanner aplikaci. 
-	\item Z aplikace OpenTripPlanner získáme seznam cest, pokud nějaké existují. 
-	\item Jednotlivé cesty dekódujeme a ke každé si ukládáme celkový čas cesty, a to jak k celé trase, tak i k jejím etapám (částím). 
-	\item Podíváme se, zda je danou část (etapu) cesty možné cestovat více různými prostředky. Pokud ano, přidáme alternativní prostředek jako proměnnou k etapě cesty.
-	\item Vybereme $n$ nejlepších cest dle kritéria (nejkratšího času).
-\end{enumerate}
+	\item [Krok 2]Z požadavku od klienta vytvoříme požadavek pro OpenTripPlanner. K požadavku přidáme dodatečné parametry z předchozího kroku, které OTP podporuje. Požadavek poté odešleme na OpenTripPlanner aplikaci. 
+	\item [Krok 3]Z aplikace OpenTripPlanner získáme seznam cest, pokud nějaké existují. 
+	\item [Krok 4]Jednotlivé cesty dekódujeme a ke každé si ukládáme celkový čas cesty, a to jak k celé trase, tak i k jejím etapám (částím). 
+	\item [Krok 5]Podíváme se, zda je danou část (etapu) cesty možné cestovat více různými prostředky. Pokud ano, přidáme alternativní prostředek jako proměnnou k etapě cesty.
+	\item [Krok 6]Vybereme $n$ nejlepších cest dle kritéria (nejkratšího času).
+\end{description}
 
 % V Případě
 
@@ -652,8 +652,8 @@ FIRST MILE
 
 \paragraph{Plánování dle problému první míle}
 
-\begin{enumerate}
-	\item Z požadavku od klienta převezmeme potřebné parametry. Mezi teto parametry patří
+\begin{description}
+	\item [Krok 1] Z požadavku od klienta převezmeme potřebné parametry. Mezi teto parametry patří
 	\begin{itemize}
 		\item zeměpisné délky a šířky počátečního a konečného bodu,
 		\item výběr města (toto je z důvodu, že mapový podklad je omezen vždy na jedno město hlavně kvůli šetření paměti),
@@ -663,11 +663,11 @@ FIRST MILE
 	% \begin{itemize}
 	% 	\item TODO. Transit
 	% \end{itemize}
-	\item vytvoříme HexSpace graf \footnote{HexSpace je definován v předchozí kapitole \ref{HexSpace indexovací systém}.},
-	\item do HexSpace grafu vložíme 2 uzly -- počáteční a konečný bod cesty a pro ně vytvoříme Hexagon objekt,
-	\item vybereme vozidla v okolí počátečního bodu\footnote{Vozidla v okolí bodu jsou vybírána pomocí Harvesinova vzorce, který je popsán v kapitole \ref{vyber-docku}.} a přidáme je jako uzly do HexSpace grafu,
-	\item vybereme přestupní stanice v okolí počátečního bodu\footnote{Výběr přestupních stanic je popsán v kapitole \ref{vyber-tranzitnich-stanic}.} a přidáme je jako uzly do HexSpace grafu, 
-	\item asynchronně spočítáme váhy jednotlivých etap tras. Pomocí OSRM a OTP backendů spočítáme 
+	\item [Krok 2] vytvoříme HexSpace graf \footnote{HexSpace je definován v předchozí kapitole \ref{HexSpace indexovací systém}.},
+	\item [Krok 3] do HexSpace grafu vložíme 2 uzly -- počáteční a konečný bod cesty a pro ně vytvoříme Hexagon objekt,
+	\item [Krok 4] vybereme vozidla v okolí počátečního bodu\footnote{Vozidla v okolí bodu jsou vybírána pomocí Harvesinova vzorce, který je popsán v kapitole \ref{vyber-docku}.} a přidáme je jako uzly do HexSpace grafu,
+	\item [Krok 5] vybereme přestupní stanice v okolí počátečního bodu\footnote{Výběr přestupních stanic je popsán v kapitole \ref{vyber-tranzitnich-stanic}.} a přidáme je jako uzly do HexSpace grafu, 
+	\item [Krok 6] asynchronně spočítáme váhy jednotlivých etap tras. Pomocí OSRM a OTP backendů spočítáme 
 	\begin{itemize}
 		\item Time matrix\footnote{Endpoint OSRM s časovou maticí je popsán v \ref{osrm-time-matrix}} z počátečního bodu do bodů s vozidly pomocí chůze (one to many),
 		\item Time matrix z bodů s vozidly do bodů s přestupními stanicemi (many to many),
@@ -676,7 +676,7 @@ FIRST MILE
 		% \item Time matrix z bodů s docky do konečného bodu (many to one).
 	\end{itemize}
 
-	\item Do HexSpace grafu přidáme
+	\item [Krok 7] Do HexSpace grafu přidáme
 
 	\begin{itemize}
 		\item hrany z počátečního uzlu do uzlů se sdílenými vozidly vybranými v předchozím kroku (s přidělenou váhou vytvořenou pomocí OSRM v bodu výše; a módem chůze),
@@ -694,45 +694,45 @@ FIRST MILE
 	% 	\item vozidel okolo počátečního bodu,
 	% 	\item stanic okolo počátečního bodu,
 	% \end{itemize}
-	\item pomocí Dijskrova algoritmu \footnote{Dijskrův algoritmus je obecně definován kapitole \ref{dijskra}, spolu s konkrétní implementací.} nalezneme základy tras nad HexSpace grafem,
+	\item [Krok 8] pomocí Dijskrova algoritmu \footnote{Dijskrův algoritmus je obecně definován kapitole \ref{dijskra}, spolu s konkrétní implementací.} nalezneme základy tras nad HexSpace grafem,
 
-	\item optimalizujeme výběr prostředku tak, že pro každou etapu cesty, která je plánována sdíleným prostředkem
+	\item [Krok 9] optimalizujeme výběr prostředku tak, že pro každou etapu cesty, která je plánována sdíleným prostředkem
 	\begin{itemize}
 		\item vybereme hexagon počátečního bodu a v něm nalezneme nebližší prostředek daného typu a poskytovatele k počátečnímu bodu. Díky tomu minimalizujeme vzdálenost chůze.
 	\end{itemize}
-	\item Vrátíme nejlepší základy tras (základem trasy nazývám takovou trasu, která ještě neobsahuje detailní informace o cestě),
-	\item K základům tras konkurentně spočítáme detaily všech etap trasy tak, že
+	\item [Krok 10] Vrátíme nejlepší základy tras (základem trasy nazývám takovou trasu, která ještě neobsahuje detailní informace o cestě),
+	\item [Krok 11] K základům tras konkurentně spočítáme detaily všech etap trasy tak, že
 	\begin{itemize}
 		\item pro etapy, kde způsob dopravy je sdílený dopravní prostředek nebo chůze, využijeme OSRM backendu,
 		\item pro etapy, kde způsob dopravy je veřejná doprava, využijeme OTP backendu.
 	\end{itemize}
-	\item Vybereme a vrátíme nejrychlejší cestu.
+	\item [Krok 12] Vybereme a vrátíme nejrychlejší cestu.
 
-\end{enumerate}
+\end{description}
 
 
 \paragraph{Plánování dle problému poslední míle}
 
 
 
-\begin{enumerate}
-	\item Z požadavku od klienta převezmeme potřebné parametry. Mezi teto parametry patří
+\begin{description}
+	\item [Krok 1] Z požadavku od klienta převezmeme potřebné parametry. Mezi teto parametry patří
 	\begin{itemize}
 		\item zeměpisné délky a šířky počátečního a konečného bodu,
 		\item výběr města (toto je z důvodu, že mapový podklad je omezen vždy na jedno město hlavně kvůli šetření paměti),
 		\item výběr společností sdílené mobility. Pokud parametr není zadán, jsou automaticky vybrány všechny možné služby pro daný typ mobility a pro dané město.
 	\end{itemize}
-	\item vytvoříme HexSpace graf \footnote{HexSpace je definován v předchozí kapitole \ref{HexSpace indexovací systém}.},
-	\item do HexSpace grafu vložíme 2 uzly -- počáteční a konečný bod cesty a pro ně vytvoříme Hexagon objekt,
-	\item Zjistíme, zda konečný bod je v zóně, kde vozidlo lze vrátit. 
+	\item [Krok 2] vytvoříme HexSpace graf \footnote{HexSpace je definován v předchozí kapitole \ref{HexSpace indexovací systém}.},
+	\item [Krok 3] do HexSpace grafu vložíme 2 uzly -- počáteční a konečný bod cesty a pro ně vytvoříme Hexagon objekt,
+	\item [Krok 4] Zjistíme, zda konečný bod je v zóně, kde vozidlo lze vrátit. 
 	\begin{itemize}
 		\item Pokud není, algoritmus ukončíme a vrátíme prázný seznam cest.
 		\item Pokud ano, vybereme vozidla v okolí konečného bodu\footnote{Vozidla v okolí bodu jsou vybírána pomocí Harvesinova vzorce, který je popsán v kapitole \ref{vyber-docku}.} a přidáme je jako uzly do HexSpace grafu,
 
 	\end{itemize}
 
-	\item vybereme přestupní stanice v okolí konečného bodu\footnote{Výběr přestupních stanic je popsán v kapitole \ref{vyber-tranzitnich-stanic}.} a přidáme je jako uzly do HexSpace grafu, 
-	\item asynchronně spočítáme váhy jednotlivých etap tras. Pomocí OSRM a OTP backendů spočítáme 
+	\item [Krok 5] vybereme přestupní stanice v okolí konečného bodu\footnote{Výběr přestupních stanic je popsán v kapitole \ref{vyber-tranzitnich-stanic}.} a přidáme je jako uzly do HexSpace grafu, 
+	\item [Krok 6] asynchronně spočítáme váhy jednotlivých etap tras. Pomocí OSRM a OTP backendů spočítáme 
 	\begin{itemize}
 		% \item Time matrix\footnote{Endpoint OSRM s časovou maticí je popsán v \ref{osrm-time-matrix}} z počátečního bodu do bodů s vozidly pomocí chůze (one to many),
 		% \item Time matrix z bodů s vozidly do bodů s přestupními stanicemi (many to many),
@@ -742,7 +742,7 @@ FIRST MILE
 		% \item Time matrix z bodů s docky do konečného bodu (many to one).
 	\end{itemize}
 
-	\item Do HexSpace grafu přidáme
+	\item [Krok 7] Do HexSpace grafu přidáme
 
 	\begin{itemize}
 		\item hrany z počátečního uzlu do uzlů se sdílenými vozidly vybranými v předchozím kroku (s přidělenou váhou vytvořenou pomocí OTP v bodu výše; a módem hromadné dopravy),
@@ -761,20 +761,20 @@ FIRST MILE
 	
 
 
-	\item pomocí Dijskrova algoritmu \footnote{Dijskrův algoritmus je obecně definován kapitole \ref{dijskra}, spolu s konkrétní implementací.} nalezneme základy tras nad HexSpace grafem,
+	\item [Krok 8] pomocí Dijskrova algoritmu \footnote{Dijskrův algoritmus je obecně definován kapitole \ref{dijskra}, spolu s konkrétní implementací.} nalezneme základy tras nad HexSpace grafem,
 
-	\item optimalizujeme výběr prostředku tak, že pro každou etapu cesty, která je plánována sdíleným prostředkem
+	\item [Krok 9] optimalizujeme výběr prostředku tak, že pro každou etapu cesty, která je plánována sdíleným prostředkem
 	\begin{itemize}
 		\item vybereme hexagon počátečního bodu a v něm nalezneme nebližší prostředek daného typu a poskytovatele k počátečnímu bodu. Díky tomu minimalizujeme vzdálenost chůze.
 	\end{itemize}
-	\item Vrátíme nejlepší základy tras (základem trasy nazývám takovou trasu, která ještě neobsahuje detailní informace o cestě),
-	\item K základům tras konkurentně spočítáme detaily všech etap trasy tak, že
+	\item [Krok 10] Vrátíme nejlepší základy tras (základem trasy nazývám takovou trasu, která ještě neobsahuje detailní informace o cestě),
+	\item [Krok 11] K základům tras konkurentně spočítáme detaily všech etap trasy tak, že
 	\begin{itemize}
 		\item pro etapy, kde způsob dopravy je sdílený dopravní prostředek nebo chůze, využijeme OSRM backendu,
 		\item pro etapy, kde způsob dopravy je veřejná doprava, využijeme OTP backendu.
 	\end{itemize}
-	\item Vybereme a vrátíme nejrychlejší cestu.
-\end{enumerate}
+	\item [Krok 12] Vybereme a vrátíme nejrychlejší cestu.
+\end{description}
 
 \subsection{Pomocné funkce plánovače} 
 
