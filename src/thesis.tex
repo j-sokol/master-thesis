@@ -350,7 +350,7 @@ Každá z těchto variant problému nejkratší cesty lze vyřešit pomocí Dijs
 
 % \subsubsection{Hledání cest v silničních sítích}
 
-\subsubsection{Dijskrův algoritmus}
+\subsubsection{Dijskrův algoritmus}\label{dijskra}
 
 Práce nazvaná 'A Note on Two Problems in Connexion with Graphs' byla publikována v žurnálu 'Numerische Mathematik' v roce 1959. bylo to právě v této práci, kde Edsger W. Dijkstra navrhl Dijkstrův algoritmus pro řešení  různých variant problému nejkratších cest.
 
@@ -530,74 +530,88 @@ V základě Open Trip Planner nenabízí API endpoint pro vytvoření časové m
 
 Pro plánování cest s hromadnou dopravou je využito aplikace Open Source Routing Machine zmíněného výše.
 
-TODO write intro + endpointy pro bike, scooters, carshare, etc
+TODO write intro + endpointy pro .bike, scooters, carshare, etc
 
 
-
-\begin{enumerate}
-	\item Z požadavku od klienta převezmeme potřebné parametry. Mezi teto parametry patří
+\begin{description}
+	% \item [Krok 1]
+	
+% \begin{enumerate}
+	\item [Krok 1] Z požadavku od klienta převezmeme potřebné parametry. Mezi teto parametry patří
 	\begin{itemize}
 		\item zeměpisné délky a šířky počátečního a konečného bodu,
 		\item výběr města (toto je z důvodu, že mapový podklad je omezen vždy na jedno město hlavně kvůli šetření paměti),
 		\item výběr společností sdílené mobility. Pokud parametr není zadán, jsou automaticky vybrány všechny možné služby pro daný typ mobility a pro dané město.
 	\end{itemize}
-	\item konkurentně vedle sebe vytvoříme 2 různé procesy, jeden pro plánování cest s dockovanými prostředky (se stanicemi, ze kterých lze sdílený prostředek vyzvednout a do kterého lze vrátit a pro prostředky, které je možné vrátit pouze ve vyznačených zónách), druhý pro nedockované prostředky. V každém z procesů budeme hledat základy cest (stěžejní etapy celé trasy), které obsahují daný sdílený prostředek. Pro dockované vozidla sdílených mobilit
-	\begin{itemize}
-		\item vybereme všechna sdílená vozidla v okruhu od počátečního bodu, kde poloměr okruhu je dán konfigurací aplikace,
-		\item Vytvoříme HexSpace graf\footnote{HexSpace je definován v předchozí kapitole \ref{HexSpace indexovací systém}.},
-		\item do HexSpace grafu vložíme 2 uzly -- počáteční a konečný bod cesty a pro ně vytvoříme Hexagon objekt,
+	\item [Krok 2a] konkurentně vedle sebe vytvoříme 2 různé procesy, jeden pro plánování cest s dockovanými prostředky (se stanicemi, ze kterých lze sdílený prostředek vyzvednout a do kterého lze vrátit a pro prostředky, které je možné vrátit pouze ve vyznačených zónách), druhý pro nedockované prostředky. V každém z procesů budeme hledat základy cest (stěžejní etapy celé trasy), které obsahují daný sdílený prostředek. Pro dockované vozidla sdílených mobilit
+	\begin{description}
+		% \item[] 
+		\item [Krok 2a.1] vybereme všechna sdílená vozidla v okruhu od počátečního bodu, kde poloměr okruhu je dán konfigurací aplikace,
+		\item [Krok 2a.2] Vytvoříme HexSpace graf\footnote{HexSpace je definován v předchozí kapitole \ref{HexSpace indexovací systém}.},
+		\item [Krok 2a.3] do HexSpace grafu vložíme 2 uzly -- počáteční a konečný bod cesty a pro ně vytvoříme Hexagon objekt,
 		% \item z vybraných vozidel vytvoříme hexagony, které později využijeme,
 		% \item do HexSpace grafu vložíme vybraná vozidla jako hrany,
-		\item z docků a krajních míst servisních zón vytvoříme hrany v HexSpace \footnote{ Výběr relevantních docků je popsán v \ref{vyber-docku}  a výběr bodů ze servisních zón je popsán v \ref{vyber-zon}.} (pokud již neexistuje Hexagon, tak ho vytvoříme), 
+		\item [Krok 2a.4] z docků a krajních míst servisních zón vytvoříme hrany v HexSpace \footnote{ Výběr relevantních docků je popsán v \ref{vyber-docku}  a výběr bodů ze servisních zón je popsán v \ref{vyber-zon}.} (pokud již neexistuje Hexagon, tak ho vytvoříme), 
 		% \item do HexSpace grafu vložíme informace o tom, které hexagony jsou zóny pro vrácení prostředků a které nejsou,
-		\item asynchronně spočítáme váhy jednotlivých etap tras. Pomocí OSRM backendu spočítáme 
+		\item [Krok 2a.5] asynchronně spočítáme váhy jednotlivých etap tras. Pomocí OSRM backendu spočítáme 
 		\begin{itemize}
 			\item Time matrix\footnote{Endpoint OSRM s časovou maticí je popsán v \ref{osrm-time-matrix}} z počátečního bodu do bodů s vozidly pomocí chůze (one to many),
 			\item Time matrix z bodů s vozidly do bodů s docky (many to many),
 			\item Time matrix z bodů s docky do konečného bodu (many to one).
 		\end{itemize}
 		
-		\item V HexSpace grafu přidáme uzly pro každé vybrané sdílené vozidlo, plus hranu z hranu z počátečního uzlu do uzlů s vozidly (s přidělenou váhou vytvořenou pomocí OSRM v bodu výše; a módem chůze),
-		\item V HexSpace grafu přidáme uzly pro vybrané stanice vozidel (případně mezní body zón), plus hrany 
+		\item [Krok 2a.6] V HexSpace grafu přidáme uzly pro každé vybrané sdílené vozidlo, plus hranu z hranu z počátečního uzlu do uzlů s vozidly (s přidělenou váhou vytvořenou pomocí OSRM v bodu výše; a módem chůze),
+		\item [Krok 2a.7] V HexSpace grafu přidáme uzly pro vybrané stanice vozidel (případně mezní body zón), plus hrany 
 		\begin{itemize}
 			\item z uzlu vozidla do uzlu stanice (resp. mezního bodu zóny), s přidělenou váhou a módem daného sdíleného prostředku,
 			\item z uzlu docku (resp. mezního bodu zóny) do konečného uzlu, s přidělenou váhou a módem chůze,
 		\end{itemize}
 
-		\item pomocí Dijskry \footnote{Dijskrův algoritmus je obecně definován kapitole \ref{dijskra}, spolu s konkrétní implementací.} nalezneme základy tras nad HexSpace grafem,
+		\begin{figure}[H]\centering
+			% \includegraphics[width=0.5\textwidth, angle=30]{cvut-logo-bw}
+			\includegraphics[width=1\textwidth]{graphs/single-modal-docked-graph.png}
+		
+			\caption[Singlemodální graf pro plán cesty z bodu A do bodu B.]{Singlemodální graf pro plán cesty z bodu A do bodu B, pomocí sdíleného prostředku. Uzly D označují místa, kde se nachází sdílené prostředky a jsou připraveny k použití. Uzel C označuje nejbližší místo k bodu B, kde lze sdílený prostředek vrátit. Zelené hrany jsou realizovány pomocí chůze, zelené pomocí sdíleného prostředku. K vizualizaci grafu je využita knihovna Folium. \cite{folium}}\label{fig:singlemodal-graph}
+			% \label{fig:service-zone}
+		
+		\end{figure}
+		
+
+		\item [Krok 2a.8] pomocí Dijskrova algoritmu \footnote{Dijskrův algoritmus je obecně definován kapitole \ref{dijskra}, spolu s konkrétní implementací.} nalezneme základy tras nad HexSpace grafem,
 		% \begin{itemize}
 		% 	\item 
 		% 	\item 
 		% \end{itemize}
 
-		\item optimalizujeme výběr prostředku tak, že pro každou etapu cesty, která je plánována sdíleným prostředkem
+		\item [Krok 2a.9] optimalizujeme výběr prostředku tak, že pro každou etapu cesty, která je plánována sdíleným prostředkem
 		\begin{itemize}
 			\item vybereme hexagon počátečního bodu a v něm nalezneme nebližší prostředek daného typu a poskytovatele k počátečnímu budou. Díky tomu minimalizujeme vzdálenost chůze
 		\end{itemize}
 
-		\item vrátíme nejlepší základy tras (základem trasy nazývám takovou trasu, která ještě neobsahuje detailní informace o cestě),
-	\end{itemize}
-	Pro nedockované vozidla sdílených mobilit
-	\begin{itemize}
-		\item vybereme všechna vozidla v okruhu od počátečního bodu, kde poloměr je dán konfigurací aplikace,
-		\item pro všechna vybraná vozidla se pokusíme nalézt 2 cesty:
+		\item [Krok 2a.10] vrátíme nejlepší základy tras (základem trasy nazývám takovou trasu, která ještě neobsahuje detailní informace o cestě),
+	\end{description}
+	\item [Krok 2b] Pro nedockované vozidla sdílených mobilit
+	\begin{description}
+		\item [Krok 2b.1] vybereme všechna vozidla v okruhu od počátečního bodu, kde poloměr je dán konfigurací aplikace,
+		\item [Krok 2b.2] pro všechna vybraná vozidla se pokusíme nalézt 2 cesty:
 		\begin{itemize}
 			\item cestu chůzí z počátečního bodu ke sdíleným vozidlům (tzv. one to many popsaný v kapitolách výše),
 			\item cestu na vozidle z aktuálního místa vozidla do cílového bodu cesty.
 		\end{itemize}
 		Tyto dvě etapy celkové cesty spojíme do sebe a vypočítáme celkovou délku, dobu a cenu trasy. Cena je vypočítána dle zálkadního tarifu dané služby mobilit.
-		\item Plány tras jsou seřazeny (dle doby cesty) a pro každou společnost je vybrána nejrychlejší trasa, která je poté vrácena.
+		\item [Krok 2b.3] Plány tras jsou seřazeny (dle doby cesty) a pro každou společnost je vybrána nejrychlejší trasa, která je poté vrácena.
 	
-	\end{itemize}
-	\item K základům tras konkurentně spočítáme detaily všech etap trasy tak, že
+	\end{description}
+	 \item [Krok 4] K základům tras konkurentně spočítáme detaily všech etap trasy tak, že
 		\begin{itemize}
 			\item pro etapy, kde způsob dopravy je sdílený dopravní prostředek nebo chůze, využijeme OSRM backendu,
 			\item pro etapy, kde způsob dopravy je veřejná doprava, využijeme OTP backendu.
 		\end{itemize}
-	\item Vrátíme nejrychlejší cestu pro každou sdílenou mobilitu.
+	\item [Krok 4]Vrátíme nejrychlejší cestu pro každou sdílenou mobilitu.
 
 
-\end{enumerate}
+\end{description}
+% \end{enumerate}
 
 
 
@@ -610,8 +624,6 @@ Pro plánování cest s hromadnou dopravou je využito aplikace OpenTripPlanner 
 
 Plán cesty s hromadnou dopravou se zkládá z těchto kroků:
 
-
-
 \begin{enumerate}
 	\item Z požadavku od klienta převezmeme potřebné parametry. Mezi teto parametry patří
 	\begin{itemize}
@@ -620,33 +632,25 @@ Plán cesty s hromadnou dopravou se zkládá z těchto kroků:
 		\item výběr módů dopravy (mezi ně patří tramvaj, autobus, chůze, lanovka, atp.),
 		\item a další dodatečné parametry k vyhledání nejvhodnější cesty. Mezi tyto dodatečné parametry patří maximální délka chůze, maximální počet přestupů a  minimální čas přestupu.
 	\end{itemize}
-   
 
 	\item Z požadavku od klienta vytvoříme požadavek pro OpenTripPlanner. K požadavku přidáme dodatečné parametry z předchozího kroku, které OTP podporuje. Požadavek poté odešleme na OpenTripPlanner aplikaci. 
 	\item Z aplikace OpenTripPlanner získáme seznam cest, pokud nějaké existují. 
 	\item Jednotlivé cesty dekódujeme a ke každé si ukládáme celkový čas cesty, a to jak k celé trase, tak i k jejím etapám (částím). 
 	\item Podíváme se, zda je danou část (etapu) cesty možné cestovat více různými prostředky. Pokud ano, přidáme alternativní prostředek jako proměnnou k etapě cesty.
 	\item Vybereme $n$ nejlepších cest dle kritéria (nejkratšího času).
-	% \begin{itemize}
-	% 	\item v~případě Windows použijte šablonu pro kódování \mbox{Windows-1250},
-	% 	\item jinak zkuste použít šablonu pro kódování \mbox{ISO-8859-2}.
-	% \end{itemize}
 \end{enumerate}
-
-
-
 
 % V Případě
 
 
-
-% \paragraph{}
 \subsubsection{Multimodální s využitím hromadné dopravy a sdílených kol}
 
 
 Plán cesty s hromadnou dopravou a (kolo, koloběžka, skutr, atd) se skládá z těchto kroků:
 
 FIRST MILE
+
+\paragraph{Plánování dle problému první míle}
 
 \begin{enumerate}
 	\item Z požadavku od klienta převezmeme potřebné parametry. Mezi teto parametry patří
@@ -691,10 +695,6 @@ FIRST MILE
 	% 	\item stanic okolo počátečního bodu,
 	% \end{itemize}
 	\item pomocí Dijskrova algoritmu \footnote{Dijskrův algoritmus je obecně definován kapitole \ref{dijskra}, spolu s konkrétní implementací.} nalezneme základy tras nad HexSpace grafem,
-	% \begin{itemize}
-	% 	\item 
-	% 	\item 
-	% \end{itemize}
 
 	\item optimalizujeme výběr prostředku tak, že pro každou etapu cesty, která je plánována sdíleným prostředkem
 	\begin{itemize}
@@ -708,22 +708,77 @@ FIRST MILE
 	\end{itemize}
 	\item Vybereme a vrátíme nejrychlejší cestu.
 
-
-
-
-	% \begin{itemize}
-	% 	\item v~případě Windows použijte šablonu pro kódování \mbox{Windows-1250},
-	% 	\item jinak zkuste použít šablonu pro kódování \mbox{ISO-8859-2}.
-	% \end{itemize}
 \end{enumerate}
 
-TODO write similarly for last mile
+
+\paragraph{Plánování dle problému poslední míle}
 
 
 
-TODO write intro
+\begin{enumerate}
+	\item Z požadavku od klienta převezmeme potřebné parametry. Mezi teto parametry patří
+	\begin{itemize}
+		\item zeměpisné délky a šířky počátečního a konečného bodu,
+		\item výběr města (toto je z důvodu, že mapový podklad je omezen vždy na jedno město hlavně kvůli šetření paměti),
+		\item výběr společností sdílené mobility. Pokud parametr není zadán, jsou automaticky vybrány všechny možné služby pro daný typ mobility a pro dané město.
+	\end{itemize}
+	\item vytvoříme HexSpace graf \footnote{HexSpace je definován v předchozí kapitole \ref{HexSpace indexovací systém}.},
+	\item do HexSpace grafu vložíme 2 uzly -- počáteční a konečný bod cesty a pro ně vytvoříme Hexagon objekt,
+	\item Zjistíme, zda konečný bod je v zóně, kde vozidlo lze vrátit. 
+	\begin{itemize}
+		\item Pokud není, algoritmus ukončíme a vrátíme prázný seznam cest.
+		\item Pokud ano, vybereme vozidla v okolí konečného bodu\footnote{Vozidla v okolí bodu jsou vybírána pomocí Harvesinova vzorce, který je popsán v kapitole \ref{vyber-docku}.} a přidáme je jako uzly do HexSpace grafu,
+
+	\end{itemize}
+
+	\item vybereme přestupní stanice v okolí konečného bodu\footnote{Výběr přestupních stanic je popsán v kapitole \ref{vyber-tranzitnich-stanic}.} a přidáme je jako uzly do HexSpace grafu, 
+	\item asynchronně spočítáme váhy jednotlivých etap tras. Pomocí OSRM a OTP backendů spočítáme 
+	\begin{itemize}
+		% \item Time matrix\footnote{Endpoint OSRM s časovou maticí je popsán v \ref{osrm-time-matrix}} z počátečního bodu do bodů s vozidly pomocí chůze (one to many),
+		% \item Time matrix z bodů s vozidly do bodů s přestupními stanicemi (many to many),
+		\item Time matrix\footnote{Endpoint OTP s časovou maticí je popsán v \ref{otp-time-matrix}} z počátečního bodu do bodů se sdílenými prostředky (one to many).
+		\item Time matrix\footnote{Endpoint OSRM s časovou maticí je popsán v \ref{osrm-time-matrix}} z bodů s vozidly  do konečného bodu pomocí módu sdíleného prostředku (many to one),
+
+		% \item Time matrix z bodů s docky do konečného bodu (many to one).
+	\end{itemize}
+
+	\item Do HexSpace grafu přidáme
+
+	\begin{itemize}
+		\item hrany z počátečního uzlu do uzlů se sdílenými vozidly vybranými v předchozím kroku (s přidělenou váhou vytvořenou pomocí OTP v bodu výše; a módem hromadné dopravy),
+		\item hrany z uzlů se sdílenými vozidly do konečného uzlu s přidělenou váhou a módem daného sdíleného prostředku,
+		% \item hrany z uzlů se přestupními stanicemi do do konečného uzlu, s přidělenou váhou a módem hromadné dopravy,
+	\end{itemize}
+
+	\begin{figure}[H]\centering
+		% \includegraphics[width=0.5\textwidth, angle=30]{cvut-logo-bw}
+		\includegraphics[width=1\textwidth]{graphs/multimodal-last-mile.png}
+	
+		\caption[Multimodální graf pro plán cesty z bodu A do bodu B, metodou poslední míle. ]{Multimodální graf pro plán cesty z bodu A do bodu B, metodou poslední míle. Černé hexagony obsahují přestupní stanice (Označeny jako červené body). Modré hrany označují zjednodučenou cestu pomocí hromadné dopravy, červené hrany označují cesty pomocí sdíleného prostředku. K vizualizaci grafu je využita knihovna Folium. \cite{folium}}\label{fig:singlemodal-graph}
+		% \label{fig:service-zone}
+	
+	\end{figure}
+	
+
+
+	\item pomocí Dijskrova algoritmu \footnote{Dijskrův algoritmus je obecně definován kapitole \ref{dijskra}, spolu s konkrétní implementací.} nalezneme základy tras nad HexSpace grafem,
+
+	\item optimalizujeme výběr prostředku tak, že pro každou etapu cesty, která je plánována sdíleným prostředkem
+	\begin{itemize}
+		\item vybereme hexagon počátečního bodu a v něm nalezneme nebližší prostředek daného typu a poskytovatele k počátečnímu bodu. Díky tomu minimalizujeme vzdálenost chůze.
+	\end{itemize}
+	\item Vrátíme nejlepší základy tras (základem trasy nazývám takovou trasu, která ještě neobsahuje detailní informace o cestě),
+	\item K základům tras konkurentně spočítáme detaily všech etap trasy tak, že
+	\begin{itemize}
+		\item pro etapy, kde způsob dopravy je sdílený dopravní prostředek nebo chůze, využijeme OSRM backendu,
+		\item pro etapy, kde způsob dopravy je veřejná doprava, využijeme OTP backendu.
+	\end{itemize}
+	\item Vybereme a vrátíme nejrychlejší cestu.
+\end{enumerate}
 
 \subsection{Pomocné funkce plánovače} 
+
+Podkapitola níže popisuje pomocné funkce, které jsou využity k plánování tras.
 
 \subsubsection{Výběr bodů ze servisních zón}\label{vyber-zon}
 
@@ -965,9 +1020,7 @@ Kubernetes je třetí generace služby pro řízení kontejnerů od Googlu, pře
 \subsubsection{Architektura Kubernetes}
 
 
-Kubernetes uvádí aplikačně orientovanou architekturu \footnote{AOI -- Application-Oriented Infrastructure}\cite{as-k8s-san-kho-lin}
-s motivací:
-
+Kubernetes uvádí aplikačně orientovanou architekturu \footnote{AOI -- Application-Oriented Infrastructure}\cite{as-k8s-san-kho-lin} s motivací:
 
 \begin{itemize}  
 \item  Co nejvíce zabstraktnit HW stroj a operační systém od aplikace a nasazení 
@@ -1144,6 +1197,18 @@ Pro zvýšení důvěry ve správnost a kvalitu softwaru, Fowler et al. \cite{mi
 
 \subsection{API brána}
 
+Když stavíme aplikaci jako množinu mikroslužeb, je nutné se rozhodnout, jak klienti aplikace budou komunikovat s jednotlivými mikroslužbami. S monolitickou aplikací máme pouze jeden (většinou replikovaný a load-balancovaný) endpoint. V architektuře mikroslužeb každá služba množinu svých endpointů. V kapitole níže představíme, jak tento přístup ovlivňuje komunikaci mezi aplikací a klientem, dále představíme návrhový vzor zvaný API brána.  
+
+ \paragraph{Přímá komunikace mezi mikroslužbou a klientem}
+
+ \paragraph{Využití brány}
+
+
+
+\subsubsection{Výběr API brány}
+\subsubsection{Vytvoření loadbalanceru}
+\subsubsection{Přiřazení DNS záznamu}
+
 
 \begin{figure}[H]\centering
 	\includesvg[inkscapelatex=false,width=1\textwidth]{graphs/api-gateway.drawio.svg}
@@ -1172,11 +1237,47 @@ Jak je zřejmé z diagramu, v našem případě vytváříme v každé AZ jeden 
 \subsection{Zabezpečení Kubernetes clusteru}
 
 % Principle of Least Privilege
-% scanovani imagu
-% CIS Benchmark
+
+\subsubsection{Princip nejméně privilegovaného}
+
+Již v roce 1975 Saltzer a Schroeder poznamenali, že každý program a každý uživatel nějakého systému by měli operovat s využitím nejmenší množiny privilegií, která jsou nutná k vykonání nějakého úkonu. \cite{least-priv1} Striktní následování principu nejméně privilegovaného předcházíme bezpečnostním problémům, jako privilege creep (privilegovaný slídil, \cite{least-priv3}). Bohužel porušení tohoto principu jsou poměrně častá \cite{least-priv2}, kde mezi hlavní důvody patří neznalost zabezpečitelnosti, otevřená privilegia pro budoucí použití, či nezabezpečené počáteční nastavení.
+
+V AWS je využito principu nejméně privilegovaného při vytváření IAM uživatelů a rolí \cite{aws-iam}. Tedy je nutné určit, jaké minimální oprávnění uživatel vyžaduje a vytvořit taková pravidla, aby byl schopen vykonat pouze takové úkony. Stejným principem budeme přiřazovat přístupy ke zdrojím v Kubernetes clusteru, kde využijeme RBAC \cite{k8s-rbac}.
+
+Standardním procesem je přiřazení minimální množiny oprávnění a následně přidávat další potřebná. Tento přístup je bezpečnější, než přiřazení počátečních pravidel, která jsou moc volná a následně  se je snažit utahovat. 
 
 
-\section{Continuous integration \& continuous deployment}
+\paragraph{Přiřazení Kubernetes RBAC rolí k IAM účtům}
+
+Ke Kubernetes clusteru je třeba administrativní přístup, ať už při hledání různých chyb, či pro monitoring systému. Pro zjednodušení administrace účtů je třeba  mít single source of truth (SSOT), kde jsou účty uloženy. Jako úložiště je přirozeně v AWS ekosystému vybráno IAM -- a účty v Kubernetes jsou na ně pomocí RBAC namapovány. Mapování uživatelů je detailně popsáno v \cite{iam-rbac-mapping}.
+
+Role jsou namapovány 
+
+\paragraph{Přiřazení IAM rolí k podům v Kubernetes}
+
+K přiřazení IAM rolí k podům v Kubernetes je využito open source nástroje Kube2IAM \cite{kube2iam-github}.  Kube2IAM byl první kandidát na vyřešení problému přiřazení IAM rolí ke Kubernetes zdrojům. Nástroj je nasazen na každý uzel Kubernetes jako DaemonSet. 
+DaemonSet běží v privilegovaném bezpečnostním módu, takže může vytvářet \codeword{iptables} pravidla, kterými odchytává požadavky na EC2 Metadata, běžící na adrese \codeword{169.254.169.254}. Kube2IAM pody tedy na každém Kubernetes uzlu odposlouchávají požadavky na IAM API. Místo toho, aby  autentizovali napřímo, assumují ("osvojují si") role, které jsou k podům přiřazeny pomocí anotací. Následovně odpoví s dočasnými přístupovými údaji z assumované role. Žádné změny nejsou nutné a aplikace může běžet tak, jak byla navrhnuta pro čistý Kubernetes.
+
+\begin{figure}[H]\centering
+	\includegraphics[width=1\textwidth]{graphs/kube2iam.png}
+
+	\caption[Přiřazení IAM práv, komunikace mezi podem a IAM API]{Přiřazení IAM práv, komunikace mezi podem a IAM API}\label{fig:float}
+\end{figure}
+
+
+
+Existuje několik alternativ ke Kube2IAM. Jedním z nich je Kiam \cite{kiam-github}, který je silně inspirovaný právě Kube2IAM. Kiam jako projekt je ještě více bleeding-edge, a jako projekt je o něco méně aktivní. Kiam řeší škálovací problémy a problémy se zabezpečením, které byly obsaženy v Kube2IAM v době vytvoření Kiam. Řeší to následovně -- rozděluje svoji činnost na serverovou část a agent část. Agent běží jako DaemonSet a zachytává komunikaci s EC2 metadatami, podobně jako u Kube2IAM. Rozdíl je ten, že klient nekomunikuje přímo s IAM, ale tuto práci přenechává na svoji server část. Blogový článek od vývojáře Kiam problematiku popisuje více do detailu. \cite{kiam-post} 
+
+
+Další alternativou je přiřazení IAM rolí přímo na uzly Kubernetes workerů. Toto má jednu hlavní bezpečnostní nevýhodu -- každý pod, který na daném uzlu beží, je schopen vykonávat úkony, které mu IAM role povoluje. Díku tomu tato možnost byla hned zavrhnuta.  
+
+Poslední časou využívanou variantou je využití federace autentizace pomocí OICD (OpenID Connect). \cite{eks-oidc} Této metody nebylo využito kvůli vendor lock-inu daného řešení.
+
+
+
+
+
+\section{Continuous Integration \& Continuous Deployment}
 
 Podkapitolky níže popíšou koncepty Continuous integration, Continuous delivery (dohromady také zvané jako CI/CD), dále ukážou současnou nabídku takových služeb. Dále bude jedna ze služeb vybrána a její technologie bude diskutována.
 
@@ -1223,8 +1324,6 @@ Kapitola níže popisuje praktické nasazení aplikace do distribuovaného prost
 
 
 \subsection{Helm}
-
-
 
 Standardním způsobem definování zdrojů v Kubernetes clusteru je vytvoření konfiguračního souboru pro každý zdroj. V případě, kdy spouštíme aplikaci s různým nastavením (jako produkční a testovací prostředí, atp.), bychom museli jednotlivé konfigurační soubory duplikovat. Tím míříme k redundantnímu kódu, kterému se chceme vyhnout (pokud dodržujeme DRY \footnote{DRY -- Do not repeat yourself} pravidlo).
 
@@ -1305,13 +1404,6 @@ Kapitola níže popisuje možná vylepšení a je rozdělena na vylepšení na a
 \bibliography{mybibliographyfile}
 
 \begin{thebibliography}{9}
-
-	% \bibitem{rfc}
-	% RFC 951 -- Bootstrap Protocol. Online, Duben 2017. Dostupné z~\url{https://tools.ietf.org/html/rfc951}.
-	
-	% \bibitem{ansible-modules}
-
-	% ŠAMALÍK, Adam. Extension of OpenStack Modules for Ansible Platform. Brno, 2016. Bachelor’s thesis. Brno University of Technology, Faculty of Information Technology. Supervisor Hruška Martin.
 
 \bibitem{zaklady-teorie-grafu}
 
@@ -1551,7 +1643,69 @@ v neorientovaných grafech , BAKALÁŘSKÁ PRÁCE
 Richard Benkovský , 2007, MASARYKOVA UNIVERZITA
 FAKULTA INFORMATIKY 
 
+\bibitem{least-priv1}
 
+Jerome H. Saltzer and Michael D. Schroeder. The Protection of Information in
+Computer Systems. 1975.
+
+
+\bibitem{least-priv2}
+
+Gary McGraw and John Viega. Software security principles, Part 3: Controlling access - Least privilege and compartmentalization. http://www.ibm.com/
+developerworks/library/se-priv/index.html, November 2000.
+
+\bibitem{least-priv3}
+
+Security Threats: A Guide for Small and Medium Businesses. Whitepaper,
+GFI, 2009.
+\bibitem{iam-rbac-mapping}
+
+https://docs.aws.amazon.com/eks/latest/userguide/add-user-role.html
+
+
+\bibitem{kiam-post}
+
+https://medium.com/@pingles/kiam-iterating-for-security-and-reliability-5e793ab93ec3 
+
+\bibitem{eks-oidc}
+
+https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts-technical-overview.html 
+
+\bibitem{kiam-github}
+
+https://github.com/uswitch/kiam
+
+
+\bibitem{kube2iam-github}
+
+
+https://github.com/jtblin/kube2iam
+
+
+\bibitem{aws-iam}
+
+https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html
+
+
+\bibitem{k8s-rbac}
+https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+
+\bibitem{first-last-commute}
+
+"Using Bicycles for the First and Last Mile of a Commute" (PDF). Mineta Transportation Institute. September 2009. Retrieved 24 October 2011.
+
+\bibitem{first-last-commute2}
+
+DeMaio, Paul (2009). "Bike-sharing: History, Impacts, Models of Provision, and Future" (PDF). Journal of Public Transportation. 12 (4): 41–56. doi:10.5038/2375-0901.12.4.3. Archived from the original (PDF) on 1 October 2017. Retrieved 24 October 2011.
+
+\bibitem{first-last-commute3}
+
+Shaheen, Susan; Guzman, S., and H. Zhang (2010). "Bikesharing in Europe, the Americas, and Asia: Past, Present, and Future" (PDF). Transportation Research Record: Journal of the Transportation Research Board. doi:10.3141/2143-20. S2CID 40770008. Archived from the original (PDF) on 10 June 2012.
+
+
+\bibitem{folium}
+
+https://python-visualization.github.io/folium/
 \end{thebibliography}
 
 
@@ -1563,116 +1717,7 @@ FAKULTA INFORMATIKY
 	\item[GUI] Graphical user interface
 	\item[XML] Extensible markup language
 \end{description}
-
-
-
-
-
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-% % Tuto kapitolu z výsledné práce ODSTRAŇTE.
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-% 
-% \chapter{Návod k~použití této šablony}
-% 
-% Tento dokument slouží jako základ pro napsání závěrečné práce na Fakultě informačních technologií ČVUT v~Praze.
-% 
-% \section{Výběr základu}
-% 
-% Vyberte si šablonu podle druhu práce (bakalářská, diplomová), jazyka (čeština, angličtina) a kódování (ASCII, \mbox{UTF-8}, \mbox{ISO-8859-2} neboli latin2 a nebo \mbox{Windows-1250}). 
-% 
-% V~české variantě naleznete šablony v~souborech pojmenovaných ve formátu práce\_kódování.tex. Typ může být:
-% \begin{description}
-% 	\item[BP] bakalářská práce,
-% 	\item[DP] diplomová (magisterská) práce.
-% \end{description}
-% Kódování, ve kterém chcete psát, může být:
-% \begin{description}
-% 	\item[UTF-8] kódování Unicode,
-% 	\item[ISO-8859-2] latin2,
-% 	\item[Windows-1250] znaková sada 1250 Windows.
-% \end{description}
-% V~případě nejistoty ohledně kódování doporučujeme následující postup:
-% \begin{enumerate}
-% 	\item Otevřete šablony pro kódování UTF-8 v~editoru prostého textu, který chcete pro psaní práce použít -- pokud můžete texty s~diakritikou normálně přečíst, použijte tuto šablonu.
-% 	\item V~opačném případě postupujte dále podle toho, jaký operační systém používáte:
-% 	\begin{itemize}
-% 		\item v~případě Windows použijte šablonu pro kódování \mbox{Windows-1250},
-% 		\item jinak zkuste použít šablonu pro kódování \mbox{ISO-8859-2}.
-% 	\end{itemize}
-% \end{enumerate}
-% 
-% 
-% V~anglické variantě jsou šablony pojmenované podle typu práce, možnosti jsou:
-% \begin{description}
-% 	\item[bachelors] bakalářská práce,
-% 	\item[masters] diplomová (magisterská) práce.
-% \end{description}
-% 
-% \section{Použití šablony}
-% 
-% Šablona je určena pro zpracování systémem \LaTeXe{}. Text je možné psát v~textovém editoru jako prostý text, lze však také využít specializovaný editor pro \LaTeX{}, např. Kile.
-% 
-% Pro získání tisknutelného výstupu z~takto vytvořeného souboru použijte příkaz \verb|pdflatex|, kterému předáte cestu k~souboru jako parametr. Vhodný editor pro \LaTeX{} toto udělá za Vás. \verb|pdfcslatex| ani \verb|cslatex| \emph{nebudou} s~těmito šablonami fungovat.
-% 
-% Více informací o~použití systému \LaTeX{} najdete např. v~\cite{wikilatex}.
-% 
-% \subsection{Typografie}
-% 
-% Při psaní dodržujte typografické konvence zvoleného jazyka. České \uv{uvozovky} zapisujte použitím příkazu \verb|\uv|, kterému v~parametru předáte text, jenž má být v~uvozovkách. Anglické otevírací uvozovky se v~\LaTeX{}u zadávají jako dva zpětné apostrofy, uzavírací uvozovky jako dva apostrofy. Často chybně uváděný symbol "{} (palce) nemá s~uvozovkami nic společného.
-% 
-% Dále je třeba zabránit zalomení řádky mezi některými slovy, v~češtině např. za jednopísmennými předložkami a spojkami (vyjma \uv{a}). To docílíte vložením pružné nezalomitelné mezery -- znakem \texttt{\textasciitilde}. V~tomto případě to není třeba dělat ručně, lze použít program \verb|vlna|.
-% 
-% Více o~typografii viz \cite{kobltypo}.
-% 
-% \subsection{Obrázky}
-% 
-% Pro umožnění vkládání obrázků je vhodné použít balíček \verb|graphicx|, samotné vložení se provede příkazem \verb|\includegraphics|. Takto je možné vkládat obrázky ve formátu PDF, PNG a JPEG jestliže používáte pdf\LaTeX{} nebo ve formátu EPS jestliže používáte \LaTeX{}. Doporučujeme preferovat vektorové obrázky před rastrovými (vyjma fotografií).
-% 
-% \subsubsection{Získání vhodného formátu}
-% 
-% Pro získání vektorových formátů PDF nebo EPS z~jiných lze použít některý z~vektorových grafických editorů. Pro převod rastrového obrázku na vektorový lze použít rasterizaci, kterou mnohé editory zvládají (např. Inkscape). Pro konverze lze použít též nástroje pro dávkové zpracování běžně dodávané s~\LaTeX{}em, např. \verb|epstopdf|.
-% 
-% \subsubsection{Plovoucí prostředí}
-% 
-% Příkazem \verb|\includegraphics| lze obrázky vkládat přímo, doporučujeme však použít plovoucí prostředí, konkrétně \verb|figure|. Například obrázek \ref{fig:float} byl vložen tímto způsobem. Vůbec přitom nevadí, když je obrázek umístěn jinde, než bylo původně zamýšleno -- je tomu tak hlavně kvůli dodržení typografických konvencí. Namísto vynucování konkrétní pozice obrázku doporučujeme používat odkazování z~textu (dvojice příkazů \verb|\label| a \verb|\ref|).
-% 
-% \begin{figure}\centering
-% 	\includegraphics[width=0.5\textwidth, angle=30]{cvut-logo-bw}
-% 	\caption[Příklad obrázku]{Ukázkový obrázek v~plovoucím prostředí}\label{fig:float}
-% \end{figure}
-% 
-% \subsubsection{Verze obrázků}
-% 
-% % Gnuplot BW i barevně
-% Může se hodit mít více verzí stejného obrázku, např. pro barevný či černobílý tisk a nebo pro prezentaci. S~pomocí některých nástrojů na generování grafiky je to snadné.
-% 
-% Máte-li například graf vytvořený v programu Gnuplot, můžete jeho černobílou variantu (viz obr. \ref{fig:gnuplot-bw}) vytvořit parametrem \verb|monochrome dashed| příkazu \verb|set term|. Barevnou variantu (viz obr. \ref{fig:gnuplot-col}) vhodnou na prezentace lze vytvořit parametrem \verb|colour solid|.
-% 
-% \begin{figure}\centering
-% 	\includegraphics{gnuplot-bw}
-% 	\caption{Černobílá varianta obrázku generovaného programem Gnuplot}\label{fig:gnuplot-bw}
-% \end{figure}
-% 
-% \begin{figure}\centering
-% 	\includegraphics{gnuplot-col}
-% 	\caption{Barevná varianta obrázku generovaného programem Gnuplot}\label{fig:gnuplot-col}
-% \end{figure}
-% 
-% 
-% \subsection{Tabulky}
-% 
-% Tabulky lze zadávat různě, např. v~prostředí \verb|tabular|, avšak pro jejich vkládání platí to samé, co pro obrázky -- použijte plovoucí prostředí, v~tomto případě \verb|table|. Například tabulka \ref{tab:matematika} byla vložena tímto způsobem.
-% 
-% \begin{table}\centering
-% 	\caption[Příklad tabulky]{Zadávání matematiky}\label{tab:matematika}
-% 	\begin{tabular}{|l|l|c|c|}\hline
-% 		Typ		& Prostředí		& \LaTeX{}ovská zkratka	& \TeX{}ovská zkratka	\tabularnewline \hline \hline
-% 		Text		& \verb|math|		& \verb|\(...\)|	& \verb|$...$|		\tabularnewline \hline
-% 		Displayed	& \verb|displaymath|	& \verb|\[...\]|	& \verb|$$...$$|	\tabularnewline \hline
-% 	\end{tabular}
-% \end{table}
-% 
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+ 
 
 \chapter{Obsah přiloženého CD}
 
